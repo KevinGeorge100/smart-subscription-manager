@@ -1,0 +1,106 @@
+/**
+ * This ruleset enforces a strict user-ownership model for the Subscription Clarity application.
+ *
+ * Core Philosophy:
+ * The security model is designed to be simple and highly secure. Every user is the sole owner
+ * of their data, and no user can see, modify, or even know about the existence of other users.
+ * This provides a strong privacy and security foundation.
+ *
+ * Data Structure:
+ * All user-specific data is stored in a top-level `/users` collection. Each user is represented
+ * by a single document whose ID is the user's Firebase Authentication UID. This creates a clear
+ * and direct link between a user's identity and their data.
+ * - /users/{userId}: A document containing the user's account information.
+ * - /users/{userId}/subscriptions/{subscriptionId}: A document for a single subscription.
+ *
+ * Key Security Decisions:
+ * - Strict Ownership: All operations (read, create, update, delete) on a user's document
+ *   and subcollections are restricted exclusively to that authenticated user.
+ * - No User Enumeration: Listing the entire `/users` collection is explicitly forbidden.
+ *   This is a critical security measure to prevent malicious actors from harvesting a list
+ *   of all application users.
+ * - Self-Creation: A newly authenticated user is permitted to create their own user document,
+ *   establishing their presence in the database.
+ *
+ * Denormalization for Authorization:
+ * The design relies on the path parameter `{userId}` as the primary key for authorization,
+ * directly comparing it against the authenticated user's UID (`request.auth.uid`). To ensure
+ * data integrity, the user document itself must contain an `id` field that matches this UID.
+ * This rule is enforced on creation and made immutable on update, preventing any potential
+ * ownership hijacking. This avoids extra database lookups and keeps the rules simple and fast.
+ *
+ * Structural Segregation:
+ * This principle is not applicable in the current data model, as there is no mixed
+ * public/private data. All user data is considered private to that user.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for improved readability and reusability.
+
+    /**
+     * Checks if the current request is from an authenticated user.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the currently authenticated user's UID matches the provided userId.
+     * This is the primary function for verifying document ownership.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * Verifies ownership for an existing document. Used for safe updates and deletes.
+     * Prevents operations on documents that do not exist.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * @description
+     *   Manages access to user account documents and their subcollections.
+     * @path
+     *   /users/{userId}
+     */
+    match /users/{userId} {
+      /**
+       * @description
+       *   Controls access to the user's main account document.
+       * @allow
+       *   A signed-in user (UID: "user_abc") can create, read, update, and delete
+       *   their own document at `/users/user_abc`.
+       * @deny
+       *   Any user trying to access another user's document or list the collection.
+       */
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && request.resource.data.id == userId;
+      allow update: if isExistingOwner(userId) && request.resource.data.id == resource.data.id;
+      allow delete: if isExistingOwner(userId);
+
+      /**
+       * @description
+       *   Manages access to a user's subscriptions. A user can create, read, update,
+       *   and delete their own subscriptions, but cannot access subscriptions of other users.
+       * @path
+       *   /users/{userId}/subscriptions/{subscriptionId}
+       * @allow
+       *   A user (UID: "user_abc") can create a new subscription document under `/users/user_abc/subscriptions/`.
+       *   The same user can read, update, or delete their own subscription documents.
+       * @deny
+       *   A user (UID: "user_abc") trying to access `/users/user_xyz/subscriptions/{subscriptionId}`.
+       * @principle
+       *   Enforces user ownership for all subscription data, ensuring data privacy and integrity.
+       */
+      match /subscriptions/{subscriptionId} {
+        allow read, write: if isOwner(userId);
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-landing",
+      "description": "Abstract shapes on a desk representing organization and clarity",
+      "imageUrl": "https://images.unsplash.com/photo-1729327741049-162ce089640a?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxhYnN0cmFjdCUyMGRlc2t8ZW58MHx8fHwxNzY4ODc1MzU1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "abstract desk"
+    }
+  ]
+}
