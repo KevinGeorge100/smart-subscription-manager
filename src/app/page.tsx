@@ -41,7 +41,7 @@ export default function Home() {
             <Link href="/" className="mr-6 flex items-center space-x-2">
               <ShieldCheck className="h-6 w-6 text-primary" />
               <span className="font-bold sm:inline-block">
-                Subscription Clarity
+                Smart Subscription Manager
               </span>
             </Link>
           </div>
@@ -65,7 +65,7 @@ export default function Home() {
               Take Control of Your Subscriptions
             </h1>
             <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-              Subscription Clarity helps you track, manage, and optimize your recurring payments, so you never overspend again.
+              Track, manage, and optimize your recurring payments, so you never overspend again.
             </p>
             <div className="space-x-4">
               <Link href="/register">
@@ -178,7 +178,7 @@ export default function Home() {
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground">
-            &copy; {new Date().getFullYear()} Subscription Clarity. All rights reserved.
+            &copy; {new Date().getFullYear()} Smart Subscription Manager. All rights reserved.
           </p>
         </div>
       </footer>

@@ -95,7 +95,7 @@ export default function RegisterPage() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
         <div className="mb-8 flex items-center space-x-2 text-primary">
             <ShieldCheck className="h-8 w-8" />
-            <span className="text-2xl font-bold">Subscription Clarity</span>
+            <span className="text-2xl font-bold">Smart Subscription Manager</span>
         </div>
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader>

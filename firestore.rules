@@ -1,5 +1,5 @@
 /**
- * This ruleset enforces a strict user-ownership model for the Subscription Clarity application.
+ * This ruleset enforces a strict user-ownership model for the Smart Subscription Manager application.
  *
  * Core Philosophy:
  * The security model is designed to be simple and highly secure. Every user is the sole owner

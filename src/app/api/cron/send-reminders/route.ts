@@ -49,10 +49,10 @@ function generateReminderEmailHTML(user: UserAccount, subscriptions: Subscriptio
             <ul style="list-style-type: none; padding: 0;">
                 ${subscriptionsHtml}
             </ul>
-            <p>You can manage your subscriptions by logging into your Subscription Clarity dashboard.</p>
+            <p>You can manage your subscriptions by logging into your Smart Subscription Manager dashboard.</p>
             <br>
             <p>Thanks,</p>
-            <p>The Subscription Clarity Team</p>
+            <p>The Smart Subscription Manager Team</p>
         </div>
     `;
 }
@@ -129,7 +129,7 @@ export async function GET(request: Request) {
 
             // A. Send email
             await transporter.sendMail({
-                from: '"Subscription Clarity" <no-reply@yourdomain.com>',
+                from: '"Smart Subscription Manager" <no-reply@yourdomain.com>',
                 to: user.email,
                 subject: 'Upcoming Subscription Renewals',
                 html: generateReminderEmailHTML(user, userSubscriptions),

@@ -4,7 +4,7 @@
       "$schema": "http://json-schema.org/draft-07/schema#",
       "title": "UserAccount",
       "type": "object",
-      "description": "Represents a user account within the Subscription Clarity application.",
+      "description": "Represents a user account within the Smart Subscription Manager application.",
       "properties": {
         "id": {
           "type": "string",

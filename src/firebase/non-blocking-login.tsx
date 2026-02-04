@@ -18,11 +18,10 @@ function handleAuthError(error: any) {
     case 'auth/user-disabled':
       description = 'This user account has been disabled.';
       break;
-    case 'auth/user-not-found':
-      description = 'No user found with this email.';
-      break;
-    case 'auth/wrong-password':
-      description = 'Incorrect password. Please try again.';
+    case 'auth/user-not-found': // Often replaced by invalid-credential
+    case 'auth/wrong-password': // Often replaced by invalid-credential
+    case 'auth/invalid-credential':
+      description = 'Incorrect email or password. Please check your credentials and try again.';
       break;
     case 'auth/email-already-in-use':
         description = 'This email is already in use by another account.';
@@ -31,7 +30,7 @@ function handleAuthError(error: any) {
         description = 'The password is too weak. Please use a stronger password.';
         break;
     default:
-      description = error.message;
+      description = `An unexpected error occurred: ${error.message}`;
   }
   toast({
     variant: "destructive",
