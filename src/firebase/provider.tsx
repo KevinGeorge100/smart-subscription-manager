@@ -9,35 +9,22 @@ import React, {
   useState,
   useEffect,
 } from 'react';
-
-import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getFirestore, Firestore } from 'firebase/firestore';
-import { getAuth, Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { FirebaseApp } from 'firebase/app';
+import { Firestore } from 'firebase/firestore';
+import { Auth, User, onAuthStateChanged } from 'firebase/auth';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 /* ------------------------------------------------------------------ */
-/* Firebase CLIENT initialization (Vercel-safe, explicit config)       */
-/* ------------------------------------------------------------------ */
-
-const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,
-};
-
-const firebaseApp: FirebaseApp =
-  getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
-
-const firestore: Firestore = getFirestore(firebaseApp);
-const auth: Auth = getAuth(firebaseApp);
-
-/* ------------------------------------------------------------------ */
 /* Types                                                              */
 /* ------------------------------------------------------------------ */
+
+interface FirebaseProviderProps {
+  children: ReactNode;
+  firebaseApp: FirebaseApp;
+  auth: Auth;
+  firestore: Firestore;
+}
 
 interface UserAuthState {
   user: User | null;
@@ -81,7 +68,12 @@ export const FirebaseContext =
 /* Provider                                                           */
 /* ------------------------------------------------------------------ */
 
-export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
+export const FirebaseProvider = ({
+  children,
+  firebaseApp,
+  auth,
+  firestore,
+}: FirebaseProviderProps) => {
   const [userAuthState, setUserAuthState] = useState<UserAuthState>({
     user: null,
     isUserLoading: true,
@@ -89,6 +81,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
   });
 
   useEffect(() => {
+    // Use the `auth` instance passed via props to listen for state changes.
     const unsubscribe = onAuthStateChanged(
       auth,
       (firebaseUser) => {
@@ -109,11 +102,11 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
     );
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]); // Effect depends on the auth prop.
 
   const contextValue = useMemo<FirebaseContextState>(() => {
     return {
-      areServicesAvailable: true,
+      areServicesAvailable: !!(firebaseApp && auth && firestore),
       firebaseApp,
       firestore,
       auth,
@@ -121,7 +114,7 @@ export const FirebaseProvider = ({ children }: { children: ReactNode }) => {
       isUserLoading: userAuthState.isUserLoading,
       userError: userAuthState.userError,
     };
-  }, [userAuthState]);
+  }, [userAuthState, firebaseApp, auth, firestore]);
 
   return (
     <FirebaseContext.Provider value={contextValue}>
