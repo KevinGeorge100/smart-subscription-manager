@@ -1,14 +1,11 @@
-diff --git a/node_modules/next-themes/package.json b/node_modules/next-themes/package.json
-index 5a33572..f18849b 100644
 --- a/node_modules/next-themes/package.json
 +++ b/node_modules/next-themes/package.json
-@@ -49,7 +49,7 @@
-     "react-dom": ">=16.8.0"
+@@ -53,6 +53,6 @@
+     "url": "https://github.com/pacocoursey/next-themes/issues"
    },
    "peerDependencies": {
--    "react": "^16.8 || ^17 || ^18",
--    "react-dom": "^16.8 || ^17 || ^18"
-+    "react": "^16.8 || ^17 || ^18 || ^19",
-+    "react-dom": "^16.8 || ^17 || ^18 || ^19"
-   }
- }
+-    "react": "^16.8 || ^17 || ^18"
++    "react": "^16.8 || ^17 || ^18 || ^19"
+   },
+   "dependencies": {
+     "prop-types": "^15.7.2"
