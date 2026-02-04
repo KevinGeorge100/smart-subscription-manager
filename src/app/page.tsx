@@ -5,7 +5,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 const heroImage = PlaceHolderImages.find(img => img.id === 'hero-landing');
 
@@ -34,20 +33,19 @@ export default function Home() {
   ];
 
   return (
-    <div className="flex min-h-dvh flex-col bg-background text-foreground">
+    <div className="flex min-h-screen flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-10 w-full border-b bg-background/80 backdrop-blur-sm">
+      <header className="sticky top-0 z-10 w-full border-b bg-background">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex">
             <Link href="/" className="mr-6 flex items-center space-x-2">
-              <ShieldCheck className="h-6 w-6 text-primary" />
+              <ShieldCheck className="h-6 w-6" />
               <span className="font-bold sm:inline-block">
                 Subscription Clarity
               </span>
             </Link>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-2">
-            <ThemeToggle />
             <Link href="/login">
               <Button variant="ghost">Login</Button>
             </Link>
@@ -63,7 +61,7 @@ export default function Home() {
         {/* Hero Section */}
         <section className="space-y-6 pb-8 pt-6 md:pb-12 md:pt-10 lg:py-32">
           <div className="container flex max-w-[64rem] flex-col items-center gap-4 text-center">
-            <h1 className="font-headline text-3xl font-bold sm:text-5xl md:text-6xl lg:text-7xl">
+            <h1 className="text-3xl font-bold sm:text-5xl md:text-6xl lg:text-7xl">
               Take Control of Your Subscriptions
             </h1>
             <p className="max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
@@ -82,7 +80,7 @@ export default function Home() {
 
         {/* Hero Image */}
         <section className="container">
-          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border shadow-lg">
+          <div className="relative mx-auto max-w-5xl overflow-hidden rounded-xl border">
             {heroImage && (
               <Image
                 src={heroImage.imageUrl}
@@ -97,10 +95,10 @@ export default function Home() {
         </section>
         
         {/* Problem Section */}
-        <section id="problem" className="py-20 md:py-24 lg:py-32 bg-muted/50">
+        <section id="problem" className="py-20 md:py-24 lg:py-32 bg-muted">
           <div className="container">
             <div className="mx-auto max-w-3xl text-center">
-              <h2 className="font-headline text-3xl font-bold md:text-4xl">
+              <h2 className="text-3xl font-bold md:text-4xl">
                 The Hidden Costs of Convenience
               </h2>
               <p className="mt-4 text-lg text-muted-foreground">
@@ -133,7 +131,7 @@ export default function Home() {
         {/* Features/Benefits Section */}
         <section id="features" className="container space-y-6 py-20 md:py-24 lg:py-32">
           <div className="mx-auto flex max-w-[58rem] flex-col items-center space-y-4 text-center">
-            <h2 className="font-headline text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
+            <h2 className="text-3xl font-bold leading-[1.1] sm:text-3xl md:text-5xl">
               Everything You Need for Financial Peace of Mind
             </h2>
             <p className="max-w-[85%] leading-normal text-muted-foreground sm:text-lg sm:leading-7">
@@ -142,7 +140,7 @@ export default function Home() {
           </div>
           <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem]">
             {features.map((feature) => (
-              <Card key={feature.title} className="flex flex-col justify-between p-4 transition-all hover:bg-muted/50">
+              <Card key={feature.title} className="flex flex-col justify-between p-4">
                 <CardHeader className="flex flex-row items-center gap-4 p-2">
                   {feature.icon}
                   <CardTitle>{feature.title}</CardTitle>
@@ -158,10 +156,10 @@ export default function Home() {
         {/* Final CTA Section */}
         <section id="cta" className="bg-primary py-20 text-primary-foreground">
           <div className="container flex flex-col items-center text-center">
-            <h2 className="font-headline text-3xl font-bold md:text-4xl">
+            <h2 className="text-3xl font-bold md:text-4xl">
               Ready to Declutter Your Digital Wallet?
             </h2>
-            <p className="mt-4 max-w-2xl text-lg text-primary-foreground/80">
+            <p className="mt-4 max-w-2xl text-lg">
               Start tracking your subscriptions in minutes. It's free to get started and brings immediate clarity to your spending.
             </p>
             <div className="mt-8">

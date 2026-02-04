@@ -129,7 +129,7 @@ export default function AIInsightsPanel({
   }
 
   return (
-    <Card className="bg-gradient-to-br from-card to-muted/20">
+    <Card>
       <CardHeader>
         <CardTitle>🧠 Smart Insights</CardTitle>
       </CardHeader>
@@ -137,7 +137,7 @@ export default function AIInsightsPanel({
         {insights.map((insight) => (
           <div
             key={insight.id}
-            className="flex items-start gap-3 rounded-lg border p-3 bg-background/60 shadow-sm hover:shadow-md transition-shadow"
+            className="flex items-start gap-3 rounded-lg border p-3"
           >
             {insight.type === "warning" && <AlertTriangle className="h-5 w-5 text-destructive" />}
             {insight.type === "info" && <Flame className="h-5 w-5 text-orange-500" />}
@@ -153,7 +153,7 @@ export default function AIInsightsPanel({
           </div>
         ))}
         
-        <div className="rounded-lg border bg-background/60 p-4 shadow-sm">
+        <div className="rounded-lg border p-4">
           <p className="mb-2 font-medium">🤖 AI Summary</p>
 
           {loadingAI && (

@@ -1,13 +1,14 @@
 diff --git a/node_modules/react-hook-form/package.json b/node_modules/react-hook-form/package.json
-index 2732970..74591a2 100644
+index 54867a1..35f7992 100644
 --- a/node_modules/react-hook-form/package.json
 +++ b/node_modules/react-hook-form/package.json
-@@ -62,6 +62,6 @@
-     "react-dom": ">=16.8.0"
+@@ -63,7 +63,7 @@
+     }
    },
    "peerDependencies": {
 -    "react": "^16.8.0 || ^17 || ^18"
 +    "react": "^16.8.0 || ^17 || ^18 || ^19"
    },
-   "gitHead": "1b34c8520336621f3a2410a8302f06b9b3e15038"
- }
+   "engines": {
+     "node": ">=12.22.0"
+}
