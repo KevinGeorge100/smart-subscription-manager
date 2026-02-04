@@ -80,7 +80,7 @@ export default function Home() {
 
         {/* Hero Image */}
         <section className="container">
-          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-2xl border bg-card shadow-lg">
+          <div className="relative mx-auto max-w-6xl overflow-hidden rounded-2xl border bg-card shadow-2xl ring-1 ring-black/5">
              <div className="absolute top-4 left-4 flex items-center gap-1.5">
                 <div className="h-3 w-3 rounded-full bg-red-500"></div>
                 <div className="h-3 w-3 rounded-full bg-yellow-500"></div>
@@ -111,24 +111,36 @@ export default function Home() {
               </p>
             </div>
             <div className="mt-12 grid gap-8 md:grid-cols-3">
-              <div className="flex flex-col items-center text-center p-4">
-                <h3 className="mb-2 text-2xl font-bold text-primary">71%</h3>
-                <p className="text-muted-foreground">
-                 of people waste over $50 a month on unwanted subscriptions.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center p-4">
-                <h3 className="mb-2 text-2xl font-bold text-primary">42%</h3>
-                <p className="text-muted-foreground">
-                  find it difficult to track all their recurring payments across different services.
-                </p>
-              </div>
-              <div className="flex flex-col items-center text-center p-4">
-                <h3 className="mb-2 text-2xl font-bold text-primary">85%</h3>
-                <p className="text-muted-foreground">
-                  of consumers wish they had a single place to manage all their subscriptions.
-                </p>
-              </div>
+              <Card className="text-center">
+                <CardHeader>
+                  <CardTitle className="text-4xl font-bold text-primary">71%</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Of people waste over $50 a month on unwanted subscriptions.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="text-center">
+                <CardHeader>
+                  <CardTitle className="text-4xl font-bold text-primary">42%</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Find it difficult to track all their recurring payments across different services.
+                  </p>
+                </CardContent>
+              </Card>
+              <Card className="text-center">
+                <CardHeader>
+                  <CardTitle className="text-4xl font-bold text-primary">85%</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-muted-foreground">
+                    Of consumers wish they had a single place to manage all their subscriptions.
+                  </p>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </section>

@@ -134,11 +134,11 @@ export default function DashboardPage() {
                     Welcome back, {userData?.firstName || user?.email || ''}!
                 </h1>
                 <p className="text-muted-foreground mt-2">
-                    Here's your subscription dashboard. You can add, view, and manage your subscriptions.
+                    Here&apos;s a snapshot of your subscriptions. Stay in control of your spending.
                 </p>
             </div>
             
-            <div className="max-w-5xl mx-auto space-y-8">
+            <div className="max-w-7xl mx-auto space-y-8">
                 <DashboardStats subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
                 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

@@ -2,7 +2,7 @@
 
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Lightbulb, AlertTriangle, Flame } from "lucide-react";
+import { Lightbulb, AlertTriangle, PieChart } from "lucide-react";
 import { ProcessedSubscription } from './page';
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -79,7 +79,7 @@ const InsightIcon = ({ type }: { type: Insight['type'] }) => {
   const iconClasses = "h-6 w-6";
   const iconMap = {
     warning: <AlertTriangle className={cn(iconClasses, "text-destructive")} />,
-    info: <Flame className={cn(iconClasses, "text-orange-500")} />,
+    info: <PieChart className={cn(iconClasses, "text-amber-500")} />,
     suggestion: <Lightbulb className={cn(iconClasses, "text-primary")} />,
   };
   return iconMap[type];
