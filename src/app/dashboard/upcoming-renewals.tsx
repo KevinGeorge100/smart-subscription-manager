@@ -48,7 +48,7 @@ export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsP
 
     if (showLoading) {
         return (
-            <Card className="bg-card/80 backdrop-blur-sm border-border/50">
+            <Card>
                 <CardHeader>
                     <CardTitle>Upcoming Renewals</CardTitle>
                     <CardDescription>Subscriptions renewing in the next 30 days.</CardDescription>
@@ -64,10 +64,10 @@ export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsP
     }
     
     return (
-        <Card className="border-amber-500/50 bg-amber-50/20 dark:bg-amber-900/10 backdrop-blur-sm transition-all duration-200 ease-in-out hover:shadow-lg">
+        <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                    <AlertCircle className="h-5 w-5 text-amber-500" />
                     <span>Upcoming Renewals</span>
                 </CardTitle>
                 <CardDescription>These subscriptions are renewing in the next 30 days.</CardDescription>
@@ -76,7 +76,7 @@ export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsP
                 {upcoming.length > 0 ? (
                     <div className="space-y-3">
                         {upcoming.map(sub => (
-                            <div key={sub.id} className="flex items-center justify-between rounded-md border bg-card/50 p-3 transition-shadow hover:shadow-md">
+                            <div key={sub.id} className="flex items-center justify-between">
                                 <div>
                                     <p className="font-semibold">{sub.name}</p>
                                     <p className="text-sm text-muted-foreground">
@@ -85,7 +85,7 @@ export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsP
                                 </div>
                                 <div className="text-right">
                                      <p className="font-semibold">{formatCurrency(sub.amount)}</p>
-                                     <p className="text-sm text-amber-700 dark:text-amber-500 font-medium">
+                                     <p className="text-sm text-amber-600 font-medium">
                                          {sub.daysRemaining} {sub.daysRemaining === 1 ? 'day' : 'days'} left
                                      </p>
                                 </div>

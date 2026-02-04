@@ -18,7 +18,7 @@ export type ProcessedSubscription = {
     name: string;
     amount: number;
     billingCycle: 'monthly' | 'yearly';
-    category: 'Streaming' | 'Software' | 'Cloud' | 'Education' | 'Utilities' | 'Others';
+    category: 'Streaming' | 'Software', 'Cloud', 'Education', 'Utilities', 'Others';
     renewalDate: Date;
     userId: string;
 };
