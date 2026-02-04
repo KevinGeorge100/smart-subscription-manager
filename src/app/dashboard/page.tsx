@@ -49,24 +49,32 @@ export default function DashboardPage() {
     const processedSubscriptions: ProcessedSubscription[] | null = useMemo(() => {
         if (!rawSubscriptions) return null;
         
-        return rawSubscriptions.map(sub => {
-            let renewalDate: Date;
-            if (sub.renewalDate && typeof (sub.renewalDate as any).toDate === 'function') {
-                renewalDate = (sub.renewalDate as any).toDate();
-            } else if (sub.renewalDate instanceof Date) {
-                renewalDate = sub.renewalDate;
-            } else {
-                // Fallback for invalid or missing dates to prevent crashes
-                renewalDate = new Date(); 
-            }
+        return rawSubscriptions
+            .map(sub => {
+                let renewalDate: Date | null = null;
+                // Safely convert Firestore Timestamp or existing Date object
+                if (sub.renewalDate && typeof (sub.renewalDate as any).toDate === 'function') {
+                    renewalDate = (sub.renewalDate as any).toDate();
+                } else if (sub.renewalDate instanceof Date && !isNaN(sub.renewalDate.getTime())) {
+                    renewalDate = sub.renewalDate;
+                }
 
-            return {
-                ...sub,
-                id: sub.id!,
-                amount: typeof sub.amount === 'number' && !isNaN(sub.amount) ? sub.amount : 0,
-                renewalDate,
-            };
-        });
+                // If renewalDate is invalid, we cannot process this subscription.
+                if (!renewalDate) {
+                    console.warn(`Subscription "${sub.name}" (ID: ${sub.id}) has an invalid renewal date and will be ignored.`);
+                    return null; 
+                }
+
+                return {
+                    ...sub,
+                    id: sub.id!,
+                    amount: typeof sub.amount === 'number' && !isNaN(sub.amount) ? sub.amount : 0,
+                    renewalDate,
+                };
+            })
+            // Filter out any subscriptions that returned null from the map function
+            .filter((sub): sub is ProcessedSubscription => sub !== null);
+
     }, [rawSubscriptions]);
 
     const filteredAndSortedSubscriptions = useMemo(() => {
@@ -97,11 +105,8 @@ export default function DashboardPage() {
                     return a.amount - b.amount;
                 case 'renewalDate-asc':
                 default:
-                    // Dates are now guaranteed to be JS Date objects
-                    if (a.renewalDate && b.renewalDate) {
-                        return a.renewalDate.getTime() - b.renewalDate.getTime();
-                    }
-                    return 0;
+                    // Dates are now guaranteed to be valid JS Date objects
+                    return a.renewalDate.getTime() - b.renewalDate.getTime();
             }
         });
 
