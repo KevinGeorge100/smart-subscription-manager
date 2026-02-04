@@ -30,30 +30,24 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { formatCurrency } from '@/lib/utils';
+import { ProcessedSubscription } from './page';
 
-function formatDate(date: any) {
-  if (date && typeof date.toDate === 'function') {
-    return date.toDate().toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-   if (date instanceof Date) {
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-    });
-  }
-  return 'Invalid Date';
+function formatDate(date: Date | null) {
+    if (date instanceof Date && !isNaN(date.getTime())) {
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+        });
+    }
+    return 'Invalid Date';
 }
 
 interface SubscriptionListProps {
-  subscriptions: Subscription[] | null;
+  subscriptions: ProcessedSubscription[] | null;
   isLoading: boolean;
   error: FirestoreError | Error | null;
-  onEdit: (subscription: Subscription) => void;
+  onEdit: (subscription: ProcessedSubscription) => void;
 }
 
 
@@ -62,7 +56,7 @@ export function SubscriptionList({ subscriptions, isLoading, error, onEdit }: Su
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [deleteCandidate, setDeleteCandidate] = useState<Subscription | null>(null);
+  const [deleteCandidate, setDeleteCandidate] = useState<ProcessedSubscription | null>(null);
 
   const handleDelete = () => {
     if (!user || !firestore || !deleteCandidate || !deleteCandidate.id) return;

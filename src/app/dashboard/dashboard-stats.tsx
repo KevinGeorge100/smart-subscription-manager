@@ -4,27 +4,30 @@ import { Subscription } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { LayoutList, Wallet, BellRing } from 'lucide-react';
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { addDays, isBefore, isAfter, startOfDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import { ProcessedSubscription } from './page';
+
 
 interface DashboardStatsProps {
-    subscriptions: Subscription[] | null;
+    subscriptions: ProcessedSubscription[] | null;
     isLoading: boolean;
 }
 
 export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps) {
-    const stats = useMemo(() => {
+    const [upcomingRenewalsCount, setUpcomingRenewalsCount] = useState<number | null>(null);
+
+    const staticStats = useMemo(() => {
         if (!subscriptions) {
             return {
                 totalSubscriptions: 0,
                 monthlySpend: 0,
-                upcomingRenewals: 0,
             };
         }
 
         const monthlySpend = subscriptions.reduce((total, sub) => {
-            const amount = typeof sub.amount === 'number' ? sub.amount : 0;
+            const amount = sub.amount; // Already a number
             if (sub.billingCycle === 'monthly') {
                 return total + amount;
             }
@@ -34,22 +37,27 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
             return total;
         }, 0);
 
-        const today = startOfDay(new Date());
-        const thirtyDaysFromNow = addDays(today, 30);
-        
-        const upcomingRenewals = subscriptions.filter(sub => {
-            const renewalDate = sub.renewalDate && typeof (sub.renewalDate as any).toDate === 'function' 
-                ? (sub.renewalDate as any).toDate()
-                : sub.renewalDate as Date;
-            return renewalDate && isAfter(renewalDate, today) && isBefore(renewalDate, thirtyDaysFromNow);
-        }).length;
-
         return {
             totalSubscriptions: subscriptions.length,
             monthlySpend,
-            upcomingRenewals,
         };
     }, [subscriptions]);
+    
+    useEffect(() => {
+        if (subscriptions) {
+            const today = startOfDay(new Date());
+            const thirtyDaysFromNow = addDays(today, 30);
+            
+            const upcomingRenewals = subscriptions.filter(sub => {
+                const renewalDate = sub.renewalDate; // Already a Date object
+                return renewalDate && isAfter(renewalDate, today) && isBefore(renewalDate, thirtyDaysFromNow);
+            }).length;
+            setUpcomingRenewalsCount(upcomingRenewals);
+        } else {
+            setUpcomingRenewalsCount(0);
+        }
+    }, [subscriptions]);
+
 
     if (isLoading) {
         return (
@@ -69,7 +77,7 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
                     <LayoutList className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.totalSubscriptions}</div>
+                    <div className="text-2xl font-bold">{staticStats.totalSubscriptions}</div>
                     <p className="text-xs text-muted-foreground">
                         Active subscriptions you are tracking
                     </p>
@@ -81,7 +89,7 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
                     <Wallet className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{formatCurrency(stats.monthlySpend)}</div>
+                    <div className="text-2xl font-bold">{formatCurrency(staticStats.monthlySpend)}</div>
                     <p className="text-xs text-muted-foreground">
                         Estimated monthly cost
                     </p>
@@ -93,7 +101,11 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
                     <BellRing className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">+{stats.upcomingRenewals}</div>
+                    {upcomingRenewalsCount === null ? (
+                        <Skeleton className="h-7 w-12" />
+                    ) : (
+                        <div className="text-2xl font-bold">+{upcomingRenewalsCount}</div>
+                    )}
                      <p className="text-xs text-muted-foreground">
                         In the next 30 days
                     </p>

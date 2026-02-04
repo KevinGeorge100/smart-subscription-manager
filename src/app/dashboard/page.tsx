@@ -10,11 +10,23 @@ import { DashboardStats } from './dashboard-stats';
 import { UpcomingRenewals } from './upcoming-renewals';
 import { SubscriptionControls } from './subscription-controls';
 
+// Define a more robust client-side subscription type
+export type ProcessedSubscription = {
+    id: string;
+    name: string;
+    amount: number;
+    billingCycle: 'monthly' | 'yearly';
+    category: 'Streaming' | 'Software' | 'Cloud' | 'Education' | 'Utilities' | 'Others';
+    renewalDate: Date;
+    userId: string;
+};
+
+
 export default function DashboardPage() {
     const { user } = useUser();
     const firestore = useFirestore();
 
-    const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
+    const [editingSubscription, setEditingSubscription] = useState<ProcessedSubscription | null>(null);
 
     // Add state for controls
     const [searchTerm, setSearchTerm] = useState('');
@@ -31,29 +43,53 @@ export default function DashboardPage() {
         () => (user && firestore ? collection(firestore, 'users', user.uid, 'subscriptions') : null),
         [user, firestore]
     );
-    const { data: subscriptions, isLoading: isLoadingSubscriptions, error: subscriptionsError } = useCollection<Subscription>(subscriptionsQuery);
+    const { data: rawSubscriptions, isLoading: isLoadingSubscriptions, error: subscriptionsError } = useCollection<Subscription>(subscriptionsQuery);
     
-    const filteredAndSortedSubscriptions = useMemo(() => {
-        if (!subscriptions) return null;
+    // Normalize Firestore data for client-side use
+    const processedSubscriptions: ProcessedSubscription[] | null = useMemo(() => {
+        if (!rawSubscriptions) return null;
+        
+        return rawSubscriptions.map(sub => {
+            let renewalDate: Date;
+            if (sub.renewalDate && typeof (sub.renewalDate as any).toDate === 'function') {
+                renewalDate = (sub.renewalDate as any).toDate();
+            } else if (sub.renewalDate instanceof Date) {
+                renewalDate = sub.renewalDate;
+            } else {
+                // Fallback for invalid or missing dates to prevent crashes
+                renewalDate = new Date(); 
+            }
 
-        let processedSubscriptions = [...subscriptions];
+            return {
+                ...sub,
+                id: sub.id!,
+                amount: typeof sub.amount === 'number' && !isNaN(sub.amount) ? sub.amount : 0,
+                renewalDate,
+            };
+        });
+    }, [rawSubscriptions]);
+
+    const filteredAndSortedSubscriptions = useMemo(() => {
+        if (!processedSubscriptions) return null;
+
+        let subscriptions = [...processedSubscriptions];
 
         // 1. Filter by search term
         if (searchTerm) {
-            processedSubscriptions = processedSubscriptions.filter(sub =>
+            subscriptions = subscriptions.filter(sub =>
                 sub.name.toLowerCase().includes(searchTerm.toLowerCase())
             );
         }
 
         // 2. Filter by category
         if (filterCategory !== 'All') {
-            processedSubscriptions = processedSubscriptions.filter(sub =>
+            subscriptions = subscriptions.filter(sub =>
                 sub.category === filterCategory
             );
         }
 
         // 3. Sort
-        processedSubscriptions.sort((a, b) => {
+        subscriptions.sort((a, b) => {
             switch (sortOption) {
                 case 'name-asc':
                     return a.name.localeCompare(b.name);
@@ -61,19 +97,19 @@ export default function DashboardPage() {
                     return a.amount - b.amount;
                 case 'renewalDate-asc':
                 default:
-                    const dateA = a.renewalDate && typeof (a.renewalDate as any).toDate === 'function' ? (a.renewalDate as any).toDate() : a.renewalDate as Date;
-                    const dateB = b.renewalDate && typeof (b.renewalDate as any).toDate === 'function' ? (b.renewalDate as any).toDate() : b.renewalDate as Date;
-                    if (!dateA || isNaN(dateA.getTime())) return 1;
-                    if (!dateB || isNaN(dateB.getTime())) return -1;
-                    return dateA.getTime() - dateB.getTime();
+                    // Dates are now guaranteed to be JS Date objects
+                    if (a.renewalDate && b.renewalDate) {
+                        return a.renewalDate.getTime() - b.renewalDate.getTime();
+                    }
+                    return 0;
             }
         });
 
-        return processedSubscriptions;
+        return subscriptions;
 
-    }, [subscriptions, searchTerm, filterCategory, sortOption]);
+    }, [processedSubscriptions, searchTerm, filterCategory, sortOption]);
 
-    const handleEdit = (subscription: Subscription) => {
+    const handleEdit = (subscription: ProcessedSubscription) => {
         setEditingSubscription(subscription);
         window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
     }
@@ -82,7 +118,7 @@ export default function DashboardPage() {
         setEditingSubscription(null);
     }
     
-    const displaySubscriptions = filteredAndSortedSubscriptions ?? subscriptions;
+    const displaySubscriptions = filteredAndSortedSubscriptions ?? processedSubscriptions;
 
     return (
         <main className="container p-4 sm:p-6 md:p-8">
@@ -96,8 +132,8 @@ export default function DashboardPage() {
             </div>
             
             <div className="max-w-4xl mx-auto space-y-8">
-                <DashboardStats subscriptions={subscriptions} isLoading={isLoadingSubscriptions} />
-                <UpcomingRenewals subscriptions={subscriptions} isLoading={isLoadingSubscriptions} />
+                <DashboardStats subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
+                <UpcomingRenewals subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
                 
                 <SubscriptionControls
                     searchTerm={searchTerm}

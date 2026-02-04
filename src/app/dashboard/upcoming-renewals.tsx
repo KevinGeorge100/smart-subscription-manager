@@ -1,57 +1,52 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Subscription } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AlertCircle } from 'lucide-react';
 import { differenceInDays, isAfter, isBefore, addDays, startOfDay } from 'date-fns';
 import { formatCurrency } from '@/lib/utils';
+import { ProcessedSubscription } from './page';
 
-// New type for the enriched subscription data
-interface UpcomingSubscription extends Subscription {
+
+interface UpcomingSubscription extends ProcessedSubscription {
     daysRemaining: number;
 }
 
 interface UpcomingRenewalsProps {
-    subscriptions: Subscription[] | null;
+    subscriptions: ProcessedSubscription[] | null;
     isLoading: boolean;
 }
 
 export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsProps) {
-    const upcoming = useMemo(() => {
-        if (!subscriptions) {
-            return [];
+    const [upcoming, setUpcoming] = useState<UpcomingSubscription[] | null>(null);
+
+    useEffect(() => {
+        if (subscriptions) {
+            const today = startOfDay(new Date());
+            const thirtyDaysFromNow = addDays(today, 30);
+
+            const upcomingSubscriptions: UpcomingSubscription[] = subscriptions
+                .filter(sub => {
+                    if (!sub.renewalDate || !(sub.renewalDate instanceof Date) || isNaN(sub.renewalDate.getTime())) return false;
+                    return isAfter(sub.renewalDate, today) && isBefore(sub.renewalDate, thirtyDaysFromNow);
+                })
+                .map(sub => ({
+                    ...sub,
+                    daysRemaining: differenceInDays(sub.renewalDate, today),
+                }))
+                .sort((a, b) => a.daysRemaining - b.daysRemaining);
+            
+            setUpcoming(upcomingSubscriptions);
+        } else {
+            setUpcoming([]);
         }
-
-        const today = startOfDay(new Date());
-        const thirtyDaysFromNow = addDays(today, 30);
-
-        const upcomingSubscriptions: UpcomingSubscription[] = subscriptions
-            .map(sub => {
-                // Ensure renewalDate is a JS Date object
-                const renewalDate = sub.renewalDate && typeof (sub.renewalDate as any).toDate === 'function' 
-                    ? (sub.renewalDate as any).toDate()
-                    : sub.renewalDate as Date;
-                
-                return { ...sub, renewalDate };
-            })
-            .filter(sub => {
-                if (!sub.renewalDate || !(sub.renewalDate instanceof Date) || isNaN(sub.renewalDate.getTime())) return false;
-                // Check if the renewal date is in the future but within the next 30 days
-                return isAfter(sub.renewalDate, today) && isBefore(sub.renewalDate, thirtyDaysFromNow);
-            })
-            .map(sub => ({
-                ...sub,
-                daysRemaining: differenceInDays(sub.renewalDate, today),
-            }))
-            .sort((a, b) => a.daysRemaining - b.daysRemaining);
-        
-        return upcomingSubscriptions;
-
     }, [subscriptions]);
 
-    if (isLoading) {
+    const showLoading = isLoading || upcoming === null;
+
+    if (showLoading) {
         return (
             <Card>
                 <CardHeader>

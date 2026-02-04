@@ -35,6 +35,8 @@ import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Subscription } from '@/lib/types';
+import { ProcessedSubscription } from './page';
+
 
 const formSchema = z.object({
   name: z.string().min(1, 'Subscription name is required.'),
@@ -47,7 +49,7 @@ const formSchema = z.object({
 });
 
 interface AddSubscriptionFormProps {
-    subscriptionToEdit: Subscription | null;
+    subscriptionToEdit: ProcessedSubscription | null;
     onFinishEditing: () => void;
 }
 
@@ -73,9 +75,7 @@ export function AddSubscriptionForm({ subscriptionToEdit, onFinishEditing }: Add
     if (subscriptionToEdit) {
       form.reset({
         ...subscriptionToEdit,
-        renewalDate: subscriptionToEdit.renewalDate && typeof (subscriptionToEdit.renewalDate as any).toDate === 'function' 
-            ? (subscriptionToEdit.renewalDate as any).toDate() 
-            : subscriptionToEdit.renewalDate as Date,
+        renewalDate: subscriptionToEdit.renewalDate,
       });
     } else {
       form.reset({
