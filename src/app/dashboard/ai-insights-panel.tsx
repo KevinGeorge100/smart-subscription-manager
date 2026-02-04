@@ -91,11 +91,16 @@ export default function AIInsightsPanel({
 
     setLoadingAI(true);
     setAiText(null);
+    
+    const normalizedSubs = subscriptions.map(sub => ({
+        ...sub,
+        renewalDate: sub.renewalDate.toISOString(),
+    }));
 
     fetch("/api/ai/insights", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ subscriptions }),
+      body: JSON.stringify({ subscriptions: normalizedSubs }),
     })
       .then(res => {
         if (!res.ok) throw new Error("Failed to fetch AI insights");

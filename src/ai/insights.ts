@@ -10,7 +10,7 @@ import {
   AIInsightsOutputSchema,
   type AIInsightsInput,
   type AIInsightsOutput,
-} from './insights-types';
+} from '@/lib/ai-insights-schema';
 
 const insightsPrompt = ai.definePrompt(
   {
@@ -29,7 +29,7 @@ Focus on:
 
 Use a friendly, clear tone.
 Do NOT mention AI, ML, or models.
-Do NOT repeat raw data.
+Do NOT repeat raw data or raw numbers excessively.
 Do NOT give generic advice.
 Format your output as a single string with each insight on a new line, prefixed with a relevant emoji.
 
