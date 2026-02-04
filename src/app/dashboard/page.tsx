@@ -9,6 +9,8 @@ import { SubscriptionList } from './subscription-list';
 import { DashboardStats } from './dashboard-stats';
 import { UpcomingRenewals } from './upcoming-renewals';
 import { SubscriptionControls } from './subscription-controls';
+import AIInsightsPanel from "./ai-insights-panel";
+
 
 // Define a more robust client-side subscription type
 export type ProcessedSubscription = {
@@ -138,6 +140,7 @@ export default function DashboardPage() {
             
             <div className="max-w-4xl mx-auto space-y-8">
                 <DashboardStats subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
+                <AIInsightsPanel subscriptions={processedSubscriptions ?? []} />
                 <UpcomingRenewals subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
                 
                 <SubscriptionControls
