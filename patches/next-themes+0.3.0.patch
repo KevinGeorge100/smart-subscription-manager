@@ -1,9 +1,9 @@
 --- a/node_modules/next-themes/package.json
 +++ b/node_modules/next-themes/package.json
-@@ -53,6 +53,6 @@
-     "url": "https://github.com/pacocoursey/next-themes/issues"
-   },
+@@ -34,7 +34,7 @@
+   "sideEffects": false,
    "peerDependencies": {
+     "next": ">= 9",
 -    "react": "^16.8 || ^17 || ^18"
 +    "react": "^16.8 || ^17 || ^18 || ^19"
    },

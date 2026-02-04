@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from '@/hooks/use-toast';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
@@ -60,10 +61,13 @@ export default function LoginPage() {
   }, [user, isUserLoading, router]);
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40">
+    <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40 p-4">
+        <div className="absolute top-4 right-4">
+            <ThemeToggle />
+        </div>
         <div className="mb-8 flex items-center space-x-2 text-primary">
             <ShieldCheck className="h-8 w-8" />
-            <span className="text-2xl font-bold">Smart Subscription Manager</span>
+            <span className="text-2xl font-bold">Subscription Clarity</span>
         </div>
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader>

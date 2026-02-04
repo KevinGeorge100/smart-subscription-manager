@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { PlaceHolderImages } from "@/lib/placeholder-images";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const heroImage = PlaceHolderImages.find(img => img.id === 'hero-landing');
 
@@ -35,17 +36,18 @@ export default function Home() {
   return (
     <div className="flex min-h-dvh flex-col bg-background text-foreground">
       {/* Header */}
-      <header className="sticky top-0 z-10 w-full border-b bg-background">
+      <header className="sticky top-0 z-10 w-full border-b bg-background/80 backdrop-blur-sm">
         <div className="container flex h-14 max-w-screen-2xl items-center">
           <div className="mr-4 flex">
             <Link href="/" className="mr-6 flex items-center space-x-2">
               <ShieldCheck className="h-6 w-6 text-primary" />
               <span className="font-bold sm:inline-block">
-                Smart Subscription Manager
+                Subscription Clarity
               </span>
             </Link>
           </div>
           <div className="flex flex-1 items-center justify-end space-x-2">
+            <ThemeToggle />
             <Link href="/login">
               <Button variant="ghost">Login</Button>
             </Link>
@@ -140,7 +142,7 @@ export default function Home() {
           </div>
           <div className="mx-auto grid justify-center gap-4 sm:grid-cols-2 md:max-w-[64rem]">
             {features.map((feature) => (
-              <Card key={feature.title} className="flex flex-col justify-between p-4">
+              <Card key={feature.title} className="flex flex-col justify-between p-4 transition-all hover:bg-muted/50">
                 <CardHeader className="flex flex-row items-center gap-4 p-2">
                   {feature.icon}
                   <CardTitle>{feature.title}</CardTitle>
@@ -178,7 +180,7 @@ export default function Home() {
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground">
-            &copy; {new Date().getFullYear()} Smart Subscription Manager. All rights reserved.
+            &copy; {new Date().getFullYear()} Subscription Clarity. All rights reserved.
           </p>
         </div>
       </footer>

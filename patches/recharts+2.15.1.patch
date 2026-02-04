@@ -1,14 +1,11 @@
 --- a/node_modules/recharts/package.json
 +++ b/node_modules/recharts/package.json
-@@ -107,7 +107,7 @@
-     "build": "npx rimraf recharts.js recharts.min.js es6 lib && npx webpack --config webpack.config.js",
-     "test": "npx jest --config test/jest.config.js"
+@@ -92,7 +92,7 @@
+   "prop-types": "^15.8.1"
    },
    "peerDependencies": {
 -    "react": "^16.0.0 || ^17.0.0 || ^18.0.0",
--    "react-dom": "^16.0.0 || ^17.0.0 || ^18.0.0"
 +    "react": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0",
-+    "react-dom": "^16.0.0 || ^17.0.0 || ^18.0.0 || ^19.0.0"
+     "react-dom": "^16.0.0 || ^17.0.0 || ^18.0.0"
    },
-   "dependencies": {
-     "@babel/runtime-corejs3": "^7.23.2",
+   "devDependencies": {

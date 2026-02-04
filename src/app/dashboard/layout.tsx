@@ -6,6 +6,7 @@ import { useEffect, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
 import { ShieldCheck } from 'lucide-react';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     const { user, isUserLoading } = useUser();
@@ -31,7 +32,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             <div className="flex min-h-dvh w-full flex-col items-center justify-center bg-muted/40">
                 <div className="mb-8 flex items-center space-x-2 text-primary">
                     <ShieldCheck className="h-8 w-8 animate-pulse" />
-                    <span className="text-2xl font-bold">Smart Subscription Manager</span>
+                    <span className="text-2xl font-bold">Subscription Clarity</span>
                 </div>
                 <p>Loading...</p>
             </div>
@@ -40,18 +41,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
     return (
         <div className="flex min-h-dvh flex-col bg-background text-foreground">
-             <header className="sticky top-0 z-10 w-full border-b bg-background">
+             <header className="sticky top-0 z-10 w-full border-b bg-background/80 backdrop-blur-sm">
                 <div className="container flex h-14 max-w-screen-2xl items-center justify-between">
                     <div className="mr-4 flex">
                         <a href="/" className="mr-6 flex items-center space-x-2">
                           <ShieldCheck className="h-6 w-6 text-primary" />
                           <span className="font-bold sm:inline-block">
-                            Smart Subscription Manager
+                            Subscription Clarity
                           </span>
                         </a>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-2">
                         <span className="text-sm text-muted-foreground hidden sm:inline-block">{user.email}</span>
+                        <ThemeToggle />
                         <Button onClick={handleSignOut} variant="outline">Sign Out</Button>
                     </div>
                 </div>
