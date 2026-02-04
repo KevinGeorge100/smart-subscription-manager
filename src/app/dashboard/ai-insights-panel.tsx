@@ -6,6 +6,7 @@ import { Lightbulb, AlertTriangle, Flame } from "lucide-react";
 import { ProcessedSubscription } from './page';
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 type Insight = {
   id: string;
@@ -74,6 +75,16 @@ function generateInsights(subscriptions: ProcessedSubscription[]): Insight[] {
   return insights;
 }
 
+const InsightIcon = ({ type }: { type: Insight['type'] }) => {
+  const iconClasses = "h-6 w-6";
+  const iconMap = {
+    warning: <AlertTriangle className={cn(iconClasses, "text-destructive")} />,
+    info: <Flame className={cn(iconClasses, "text-orange-500")} />,
+    suggestion: <Lightbulb className={cn(iconClasses, "text-primary")} />,
+  };
+  return iconMap[type];
+};
+
 export default function AIInsightsPanel({
   subscriptions,
 }: {
@@ -119,10 +130,13 @@ export default function AIInsightsPanel({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>🧠 Smart Insights</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="text-primary" />
+            <span>Smart Insights</span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-muted-foreground">
-          Add subscriptions to unlock personalized insights.
+          Add some subscriptions to unlock personalized insights and an AI-powered summary.
         </CardContent>
       </Card>
     );
@@ -131,39 +145,48 @@ export default function AIInsightsPanel({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>🧠 Smart Insights</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <Lightbulb className="text-primary" />
+          <span>Smart Insights</span>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {insights.map((insight) => (
-          <div
-            key={insight.id}
-            className="flex items-start gap-3 rounded-lg border p-3"
-          >
-            {insight.type === "warning" && <AlertTriangle className="h-5 w-5 text-destructive" />}
-            {insight.type === "info" && <Flame className="h-5 w-5 text-orange-500" />}
-            {insight.type === "suggestion" && <Lightbulb className="h-5 w-5 text-blue-500" />}
-
-            <div className="flex-1">
-              <div className="flex items-center gap-2">
-                <p className="font-medium">{insight.title}</p>
-                <Badge variant={insight.type === 'warning' ? 'destructive' : 'secondary'}>{insight.type}</Badge>
-              </div>
-              <p className="text-sm text-muted-foreground">{insight.message}</p>
+      <CardContent className="space-y-6">
+        <div className="space-y-4">
+            {insights.map((insight) => (
+            <div
+                key={insight.id}
+                className="flex items-start gap-4 rounded-lg border bg-background/50 p-4 transition-all hover:bg-accent"
+            >
+                <div className="mt-1">
+                    <InsightIcon type={insight.type} />
+                </div>
+                <div className="flex-1">
+                <div className="flex items-center gap-2">
+                    <p className="font-semibold">{insight.title}</p>
+                </div>
+                <p className="text-sm text-muted-foreground">{insight.message}</p>
+                </div>
             </div>
-          </div>
-        ))}
+            ))}
+        </div>
         
-        <div className="rounded-lg border p-4">
-          <p className="mb-2 font-medium">🤖 AI Summary</p>
+        <div className="rounded-lg border bg-background/50 p-4">
+          <p className="mb-3 font-medium text-lg">🤖 AI Summary</p>
 
           {loadingAI && (
-            <Skeleton className="h-20 w-full" />
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-4/5" />
+                <Skeleton className="h-4 w-full" />
+            </div>
           )}
 
           {!loadingAI && aiText && (
-            <p className="whitespace-pre-line text-sm text-muted-foreground">
-              {aiText}
-            </p>
+            <div className="whitespace-pre-line text-sm text-muted-foreground leading-relaxed">
+              {aiText.split('\n').map((line, index) => (
+                <p key={index} className="mb-2 last:mb-0">{line}</p>
+              ))}
+            </div>
           )}
         </div>
       </CardContent>

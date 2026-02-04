@@ -118,7 +118,7 @@ export default function DashboardPage() {
 
     const handleEdit = (subscription: ProcessedSubscription) => {
         setEditingSubscription(subscription);
-        window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+        document.getElementById('add-subscription-form')?.scrollIntoView({ behavior: 'smooth' });
     }
 
     const handleFinishEditing = () => {
@@ -138,30 +138,38 @@ export default function DashboardPage() {
                 </p>
             </div>
             
-            <div className="max-w-4xl mx-auto space-y-8">
+            <div className="max-w-5xl mx-auto space-y-8">
                 <DashboardStats subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
-                <AIInsightsPanel subscriptions={processedSubscriptions ?? []} />
-                <UpcomingRenewals subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
                 
-                <SubscriptionControls
-                    searchTerm={searchTerm}
-                    onSearchChange={setSearchTerm}
-                    filterCategory={filterCategory}
-                    onCategoryChange={setFilterCategory}
-                    sortOption={sortOption}
-                    onSortChange={setSortOption}
-                />
-                
-                <SubscriptionList 
-                    subscriptions={displaySubscriptions} 
-                    isLoading={isLoadingSubscriptions} 
-                    error={subscriptionsError}
-                    onEdit={handleEdit} 
-                />
-                <AddSubscriptionForm 
-                    subscriptionToEdit={editingSubscription} 
-                    onFinishEditing={handleFinishEditing} 
-                />
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div className="lg:col-span-2 space-y-8">
+                        <SubscriptionControls
+                            searchTerm={searchTerm}
+                            onSearchChange={setSearchTerm}
+                            filterCategory={filterCategory}
+                            onCategoryChange={setFilterCategory}
+                            sortOption={sortOption}
+                            onSortChange={setSortOption}
+                        />
+                        <SubscriptionList 
+                            subscriptions={displaySubscriptions} 
+                            isLoading={isLoadingSubscriptions} 
+                            error={subscriptionsError}
+                            onEdit={handleEdit} 
+                        />
+                    </div>
+                    <div className="lg:col-span-1 space-y-8">
+                        <UpcomingRenewals subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
+                        <AIInsightsPanel subscriptions={processedSubscriptions ?? []} />
+                    </div>
+                </div>
+
+                <div id="add-subscription-form">
+                    <AddSubscriptionForm 
+                        subscriptionToEdit={editingSubscription} 
+                        onFinishEditing={handleFinishEditing} 
+                    />
+                </div>
             </div>
         </main>
     );
