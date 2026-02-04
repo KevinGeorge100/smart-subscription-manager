@@ -73,7 +73,7 @@ export function SubscriptionList({ subscriptions, isLoading, error, onEdit }: Su
 
   if (isLoading) {
     return (
-        <Card>
+        <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardHeader>
                 <CardTitle>Your Subscriptions</CardTitle>
                 <CardDescription>A list of your recurring payments.</CardDescription>
@@ -91,7 +91,7 @@ export function SubscriptionList({ subscriptions, isLoading, error, onEdit }: Su
   
   if (error) {
     return (
-        <Card>
+        <Card className="bg-card/80 backdrop-blur-sm border-border/50">
             <CardHeader>
                 <CardTitle>Your Subscriptions</CardTitle>
                 <CardDescription>A list of your recurring payments.</CardDescription>
@@ -107,7 +107,7 @@ export function SubscriptionList({ subscriptions, isLoading, error, onEdit }: Su
 
   return (
     <>
-      <Card>
+      <Card className="rounded-xl overflow-hidden border border-border/50 transition-all duration-200 ease-in-out hover:shadow-lg">
         <CardHeader>
           <CardTitle>Your Subscriptions</CardTitle>
           <CardDescription>A list of your recurring payments.</CardDescription>

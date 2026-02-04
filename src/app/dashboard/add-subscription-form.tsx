@@ -120,7 +120,7 @@ export function AddSubscriptionForm({ subscriptionToEdit, onFinishEditing }: Add
   }
 
   return (
-    <Card>
+    <Card className="bg-card/80 backdrop-blur-sm border-border/50 transition-all duration-200 ease-in-out hover:shadow-lg">
       <CardHeader className="flex flex-row items-start justify-between">
         <div>
             <CardTitle>{isEditMode ? 'Edit Subscription' : 'Add New Subscription'}</CardTitle>
@@ -251,7 +251,7 @@ export function AddSubscriptionForm({ subscriptionToEdit, onFinishEditing }: Add
                 />
             </div>
             <div className="flex items-center space-x-4">
-                <Button type="submit" disabled={form.formState.isSubmitting} className="w-full sm:w-auto">
+                <Button type="submit" variant="secondary" disabled={form.formState.isSubmitting} className="w-full sm:w-auto">
                     {isEditMode ? 
                         (form.formState.isSubmitting ? 'Updating...' : 'Update Subscription') :
                         (form.formState.isSubmitting ? 'Adding...' : 'Add Subscription')

@@ -117,7 +117,7 @@ export default function AIInsightsPanel({
 
   if (!insights.length && subscriptions.length === 0) {
     return (
-      <Card>
+      <Card className="bg-gradient-to-br from-background to-muted/40 border-border/50">
         <CardHeader>
           <CardTitle>🧠 Smart Insights</CardTitle>
         </CardHeader>
@@ -129,7 +129,7 @@ export default function AIInsightsPanel({
   }
 
   return (
-    <Card>
+    <Card className="bg-gradient-to-br from-background to-muted/40 border-border/50">
       <CardHeader>
         <CardTitle>🧠 Smart Insights</CardTitle>
       </CardHeader>
@@ -137,7 +137,7 @@ export default function AIInsightsPanel({
         {insights.map((insight) => (
           <div
             key={insight.id}
-            className="flex items-start gap-3 rounded-lg border p-3"
+            className="flex items-start gap-3 rounded-lg border p-3 bg-background/60 shadow-sm hover:shadow-md transition"
           >
             {insight.type === "warning" && <AlertTriangle className="h-5 w-5 text-destructive" />}
             {insight.type === "info" && <Flame className="h-5 w-5 text-orange-500" />}

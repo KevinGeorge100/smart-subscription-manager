@@ -30,7 +30,7 @@ export function SubscriptionControls({
     onSortChange
 }: SubscriptionControlsProps) {
     return (
-        <Card>
+        <Card className="bg-card/80 backdrop-blur-sm border-border/50 transition-all duration-200 ease-in-out hover:shadow-lg">
             <CardContent className="pt-6">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <Input

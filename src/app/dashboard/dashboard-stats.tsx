@@ -71,7 +71,7 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
     
     return (
         <div className="grid gap-4 md:grid-cols-3">
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/50 transition-all duration-200 ease-in-out hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Total Subscriptions</CardTitle>
                     <LayoutList className="h-4 w-4 text-muted-foreground" />
@@ -83,7 +83,7 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/50 transition-all duration-200 ease-in-out hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Monthly Spend</CardTitle>
                     <Wallet className="h-4 w-4 text-muted-foreground" />
@@ -95,7 +95,7 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
                     </p>
                 </CardContent>
             </Card>
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/50 transition-all duration-200 ease-in-out hover:shadow-lg">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Upcoming Renewals</CardTitle>
                     <BellRing className="h-4 w-4 text-muted-foreground" />

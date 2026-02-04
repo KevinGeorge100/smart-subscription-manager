@@ -48,7 +48,7 @@ export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsP
 
     if (showLoading) {
         return (
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-border/50">
                 <CardHeader>
                     <CardTitle>Upcoming Renewals</CardTitle>
                     <CardDescription>Subscriptions renewing in the next 30 days.</CardDescription>
@@ -64,7 +64,7 @@ export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsP
     }
     
     return (
-        <Card className="border-amber-500/50 bg-amber-50/20 dark:bg-amber-900/10">
+        <Card className="border-amber-500/50 bg-amber-50/20 dark:bg-amber-900/10 backdrop-blur-sm transition-all duration-200 ease-in-out hover:shadow-lg">
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
@@ -76,7 +76,7 @@ export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsP
                 {upcoming.length > 0 ? (
                     <div className="space-y-3">
                         {upcoming.map(sub => (
-                            <div key={sub.id} className="flex items-center justify-between rounded-md border bg-card/50 p-3">
+                            <div key={sub.id} className="flex items-center justify-between rounded-md border bg-card/50 p-3 transition-shadow hover:shadow-md">
                                 <div>
                                     <p className="font-semibold">{sub.name}</p>
                                     <p className="text-sm text-muted-foreground">
