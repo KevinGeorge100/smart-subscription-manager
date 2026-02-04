@@ -41,7 +41,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="flex-1">
                   <Link href="/" className="flex items-center gap-2 font-semibold">
                     <ShieldCheck className="h-6 w-6" />
-                    <span>Subscription Clarity</span>
+                    <span>Subscription Book</span>
                   </Link>
                 </div>
                 <div className="flex items-center gap-4">

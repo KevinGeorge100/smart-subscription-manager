@@ -41,7 +41,7 @@ export default function Home() {
             <Link href="/" className="mr-6 flex items-center space-x-2">
               <ShieldCheck className="h-6 w-6 text-primary" />
               <span className="font-bold sm:inline-block">
-                Subscription Clarity
+                Subscription Book
               </span>
             </Link>
           </div>
@@ -183,7 +183,7 @@ export default function Home() {
       <footer className="border-t py-6 md:py-0">
         <div className="container flex flex-col items-center justify-center gap-4 md:h-24 md:flex-row">
           <p className="text-center text-sm leading-loose text-muted-foreground">
-            &copy; {new Date().getFullYear()} Subscription Clarity. All rights reserved.
+            &copy; {new Date().getFullYear()} Subscription Book. All rights reserved.
           </p>
         </div>
       </footer>

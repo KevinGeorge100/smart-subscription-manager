@@ -4,7 +4,7 @@ import './globals.css';
 import { FirebaseClientProvider } from '@/firebase';
 
 export const metadata: Metadata = {
-  title: 'Subscription Clarity',
+  title: 'Subscription Book',
   description: 'Take control of your subscriptions and manage your spending with ease.',
 };
 

@@ -63,7 +63,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted p-4">
         <div className="mb-8 flex items-center space-x-2">
             <ShieldCheck className="h-8 w-8" />
-            <span className="text-2xl font-bold">Subscription Clarity</span>
+            <span className="text-2xl font-bold">Subscription Book</span>
         </div>
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader>
