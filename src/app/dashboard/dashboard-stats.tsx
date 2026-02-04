@@ -24,11 +24,12 @@ export function DashboardStats({ subscriptions, isLoading }: DashboardStatsProps
         }
 
         const monthlySpend = subscriptions.reduce((total, sub) => {
+            const amount = typeof sub.amount === 'number' ? sub.amount : 0;
             if (sub.billingCycle === 'monthly') {
-                return total + sub.amount;
+                return total + amount;
             }
             if (sub.billingCycle === 'yearly') {
-                return total + sub.amount / 12;
+                return total + amount / 12;
             }
             return total;
         }, 0);
