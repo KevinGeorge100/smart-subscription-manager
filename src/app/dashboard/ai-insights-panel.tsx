@@ -3,15 +3,9 @@
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Lightbulb, AlertTriangle, Flame } from "lucide-react";
-
-type Subscription = {
-  id: string;
-  name: string;
-  category: string;
-  amount: number;
-  billingCycle: "monthly" | "yearly";
-  renewalDate: Date;
-};
+import { ProcessedSubscription } from './page';
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 type Insight = {
   id: string;
@@ -20,7 +14,7 @@ type Insight = {
   message: string;
 };
 
-function generateInsights(subscriptions: Subscription[]): Insight[] {
+function generateInsights(subscriptions: ProcessedSubscription[]): Insight[] {
   if (!subscriptions.length) return [];
 
   const insights: Insight[] = [];
@@ -48,7 +42,7 @@ function generateInsights(subscriptions: Subscription[]): Insight[] {
   });
 
   const topCategory = Object.entries(categorySpend).sort((a, b) => b[1] - a[1])[0];
-  if (topCategory) {
+  if (topCategory && totalMonthlySpend > 0) {
     const percent = Math.round((topCategory[1] / totalMonthlySpend) * 100);
     if (percent >= 40) {
       insights.push({
@@ -83,11 +77,40 @@ function generateInsights(subscriptions: Subscription[]): Insight[] {
 export default function AIInsightsPanel({
   subscriptions,
 }: {
-  subscriptions: Subscription[];
+  subscriptions: ProcessedSubscription[];
 }) {
   const insights = generateInsights(subscriptions);
+  const [aiText, setAiText] = useState<string | null>(null);
+  const [loadingAI, setLoadingAI] = useState(false);
 
-  if (!insights.length) {
+  useEffect(() => {
+    if (!subscriptions.length) {
+      setAiText(null);
+      return;
+    };
+
+    setLoadingAI(true);
+    setAiText(null);
+
+    fetch("/api/ai/insights", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ subscriptions }),
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Failed to fetch AI insights");
+        return res.json();
+      })
+      .then(data => setAiText(data.insights))
+      .catch((err) => {
+        console.error("AI Insights fetch error:", err);
+        setAiText("Could not load AI insights at this moment.");
+      })
+      .finally(() => setLoadingAI(false));
+  }, [subscriptions]);
+
+
+  if (!insights.length && subscriptions.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -111,7 +134,7 @@ export default function AIInsightsPanel({
             key={insight.id}
             className="flex items-start gap-3 rounded-lg border p-3"
           >
-            {insight.type === "warning" && <AlertTriangle className="h-5 w-5 text-red-500" />}
+            {insight.type === "warning" && <AlertTriangle className="h-5 w-5 text-destructive" />}
             {insight.type === "info" && <Flame className="h-5 w-5 text-orange-500" />}
             {insight.type === "suggestion" && <Lightbulb className="h-5 w-5 text-blue-500" />}
 
@@ -124,6 +147,20 @@ export default function AIInsightsPanel({
             </div>
           </div>
         ))}
+        
+        <div className="rounded-lg border bg-muted/40 p-4">
+          <p className="mb-2 font-medium">🤖 AI Summary</p>
+
+          {loadingAI && (
+            <Skeleton className="h-20 w-full" />
+          )}
+
+          {!loadingAI && aiText && (
+            <p className="whitespace-pre-line text-sm text-muted-foreground">
+              {aiText}
+            </p>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
