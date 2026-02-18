@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
 import * as nodemailer from 'nodemailer';
 import { Timestamp } from 'firebase-admin/firestore';
-import { Subscription, UserAccount } from '@/lib/types';
+import { type User as UserAccount, type Subscription } from '@/types';
 import { add, format, differenceInDays } from 'date-fns';
+
+export const dynamic = 'force-dynamic';
 
 const REMINDER_WINDOW_DAYS = 7; // Send reminders for subscriptions renewing in the next 7 days
 
@@ -76,7 +78,7 @@ export async function GET(request: Request) {
         // 2. Query for upcoming subscriptions across all users
         const now = Timestamp.now();
         const reminderWindowEnd = Timestamp.fromDate(add(now.toDate(), { days: REMINDER_WINDOW_DAYS }));
-        
+
         // This query requires a Firestore index. The error message from Firebase
         // will guide you to create it if it doesn't exist.
         const snapshot = await adminDb.collectionGroup('subscriptions')
@@ -95,7 +97,7 @@ export async function GET(request: Request) {
         snapshot.docs.forEach(doc => {
             const sub = doc.data() as Subscription;
             sub.id = doc.id;
-            
+
             const reminderSent = sub.reminderSentAt ? sub.reminderSentAt.toDate() : null;
 
             if (!reminderSent || reminderSent < recentReminderThreshold) {
@@ -142,7 +144,7 @@ export async function GET(request: Request) {
                 batch.update(subRef, { reminderSentAt: now });
             });
         }
-        
+
         // 6. Commit the batch update
         if (subsToRemind.length > 0) {
             await batch.commit();
@@ -154,8 +156,8 @@ export async function GET(request: Request) {
         console.error('Cron job failed:', error);
         // This is where you might integrate with a logging/monitoring service
         if (error.code === 'failed-precondition') {
-             return NextResponse.json({ 
-                success: false, 
+            return NextResponse.json({
+                success: false,
                 message: 'Query requires an index. Please create the required Firestore index.',
                 error: error.message
             }, { status: 500 });

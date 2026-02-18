@@ -1,176 +1,272 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useOptimistic, useCallback } from 'react';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
-import { AddSubscriptionForm } from './add-subscription-form';
-import { UserAccount, Subscription } from '@/lib/types';
-import { doc, collection } from 'firebase/firestore';
-import { SubscriptionList } from './subscription-list';
-import { DashboardStats } from './dashboard-stats';
-import { UpcomingRenewals } from './upcoming-renewals';
-import { SubscriptionControls } from './subscription-controls';
-import AIInsightsPanel from "./ai-insights-panel";
+import { doc, collection, deleteDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import type { User, Subscription, SubscriptionFormData, DashboardStats, SpendingTrendPoint } from '@/types';
+import { differenceInDays, addDays, subMonths, format } from 'date-fns';
 
+import { StatsCards } from './components/stats-cards';
+import { FinancialPulse } from './components/financial-pulse';
+import { QuickSyncCard } from './components/quick-sync-card';
+import { SubscriptionTable } from './components/subscription-table';
+import { UpcomingRenewals } from './components/upcoming-renewals';
+import { AddSubscriptionModal } from './components/add-subscription-modal';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-// Define a more robust client-side subscription type
-export type ProcessedSubscription = {
-    id: string;
-    name: string;
-    amount: number;
-    billingCycle: 'monthly' | 'yearly';
-    category: 'Streaming' | 'Software', 'Cloud', 'Education', 'Utilities', 'Others';
-    renewalDate: Date;
-    userId: string;
-};
-
+// ──────────────────────────────────────────────
+// Main Dashboard Page
+// ──────────────────────────────────────────────
 
 export default function DashboardPage() {
     const { user } = useUser();
     const firestore = useFirestore();
+    const { toast } = useToast();
 
-    const [editingSubscription, setEditingSubscription] = useState<ProcessedSubscription | null>(null);
+    // Modal state
+    const [modalOpen, setModalOpen] = useState(false);
+    const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
 
-    // Add state for controls
+    // Filter state
     const [searchTerm, setSearchTerm] = useState('');
     const [filterCategory, setFilterCategory] = useState('All');
-    const [sortOption, setSortOption] = useState('renewalDate-asc');
 
+    // ── Firestore Queries ──
     const userDocRef = useMemoFirebase(
-      () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
-      [user, firestore]
+        () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
+        [user, firestore]
     );
-    const { data: userData } = useDoc<UserAccount>(userDocRef);
+    const { data: userData } = useDoc<User>(userDocRef);
 
     const subscriptionsQuery = useMemoFirebase(
         () => (user && firestore ? collection(firestore, 'users', user.uid, 'subscriptions') : null),
         [user, firestore]
     );
-    const { data: rawSubscriptions, isLoading: isLoadingSubscriptions, error: subscriptionsError } = useCollection<Subscription>(subscriptionsQuery);
-    
-    // Normalize Firestore data for client-side use
-    const processedSubscriptions: ProcessedSubscription[] | null = useMemo(() => {
-        if (!rawSubscriptions) return null;
-        
+    const { data: rawSubscriptions, isLoading } = useCollection<Subscription>(subscriptionsQuery);
+
+    // ── Process subscriptions ──
+    const processedSubscriptions: Subscription[] = useMemo(() => {
+        if (!rawSubscriptions) return [];
         return rawSubscriptions
-            .map(sub => {
+            .map((sub) => {
                 let renewalDate: Date | null = null;
-                // Safely convert Firestore Timestamp or existing Date object
                 if (sub.renewalDate && typeof (sub.renewalDate as any).toDate === 'function') {
                     renewalDate = (sub.renewalDate as any).toDate();
                 } else if (sub.renewalDate instanceof Date && !isNaN(sub.renewalDate.getTime())) {
                     renewalDate = sub.renewalDate;
                 }
-
-                // If renewalDate is invalid, we cannot process this subscription.
-                if (!renewalDate) {
-                    console.warn(`Subscription "${sub.name}" (ID: ${sub.id}) has an invalid renewal date and will be ignored.`);
-                    return null; 
-                }
-
+                if (!renewalDate) return null;
                 return {
                     ...sub,
-                    id: sub.id!,
+                    id: sub.id || '',
                     amount: typeof sub.amount === 'number' && !isNaN(sub.amount) ? sub.amount : 0,
                     renewalDate,
-                };
+                    source: sub.source ?? 'manual',
+                } as Subscription;
             })
-            // Filter out any subscriptions that returned null from the map function
-            .filter((sub): sub is ProcessedSubscription => sub !== null);
-
+            .filter((sub): sub is Subscription => sub !== null);
     }, [rawSubscriptions]);
 
-    const filteredAndSortedSubscriptions = useMemo(() => {
-        if (!processedSubscriptions) return null;
-
-        let subscriptions = [...processedSubscriptions];
-
-        // 1. Filter by search term
-        if (searchTerm) {
-            subscriptions = subscriptions.filter(sub =>
-                sub.name.toLowerCase().includes(searchTerm.toLowerCase())
-            );
-        }
-
-        // 2. Filter by category
-        if (filterCategory !== 'All') {
-            subscriptions = subscriptions.filter(sub =>
-                sub.category === filterCategory
-            );
-        }
-
-        // 3. Sort
-        subscriptions.sort((a, b) => {
-            switch (sortOption) {
-                case 'name-asc':
-                    return a.name.localeCompare(b.name);
-                case 'amount-asc':
-                    return a.amount - b.amount;
-                case 'renewalDate-asc':
-                default:
-                    // Dates are now guaranteed to be valid JS Date objects
-                    return a.renewalDate.getTime() - b.renewalDate.getTime();
+    // ── Optimistic state ──
+    const [optimisticSubs, addOptimistic] = useOptimistic(
+        processedSubscriptions,
+        (state: Subscription[], action: { type: 'add' | 'delete'; payload: Subscription | string }) => {
+            if (action.type === 'add') {
+                return [...state, action.payload as Subscription];
             }
-        });
+            if (action.type === 'delete') {
+                return state.filter((s) => s.id !== action.payload);
+            }
+            return state;
+        }
+    );
 
-        return subscriptions;
+    // ── Filtered list ──
+    const filteredSubscriptions = useMemo(() => {
+        let subs = [...optimisticSubs];
+        if (searchTerm) {
+            subs = subs.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        }
+        if (filterCategory !== 'All') {
+            subs = subs.filter((s) => s.category === filterCategory);
+        }
+        subs.sort((a, b) => a.renewalDate.getTime() - b.renewalDate.getTime());
+        return subs;
+    }, [optimisticSubs, searchTerm, filterCategory]);
 
-    }, [processedSubscriptions, searchTerm, filterCategory, sortOption]);
+    // ── Dashboard stats ──
+    const stats: DashboardStats | null = useMemo(() => {
+        if (isLoading) return null;
+        const now = new Date();
+        const sevenDays = addDays(now, 7);
 
-    const handleEdit = (subscription: ProcessedSubscription) => {
-        setEditingSubscription(subscription);
-        document.getElementById('add-subscription-form')?.scrollIntoView({ behavior: 'smooth' });
-    }
+        const totalMonthlySpend = optimisticSubs.reduce((sum, sub) => {
+            return sum + (sub.billingCycle === 'yearly' ? sub.amount / 12 : sub.amount);
+        }, 0);
 
-    const handleFinishEditing = () => {
+        return {
+            totalMonthlySpend,
+            totalYearlySpend: totalMonthlySpend * 12,
+            activeCount: optimisticSubs.length,
+            aiDetectedCount: optimisticSubs.filter((s) => s.source === 'ai-detected').length,
+            upcomingRenewals: optimisticSubs.filter((s) => {
+                const diff = differenceInDays(s.renewalDate, now);
+                return diff >= 0 && diff <= 7;
+            }).length,
+        };
+    }, [optimisticSubs, isLoading]);
+
+    // ── Spending trend (placeholder: last 6 months) ──
+    const trendData: SpendingTrendPoint[] = useMemo(() => {
+        const now = new Date();
+        const monthlySpend = optimisticSubs.reduce((sum, sub) => {
+            return sum + (sub.billingCycle === 'yearly' ? sub.amount / 12 : sub.amount);
+        }, 0);
+
+        return Array.from({ length: 6 }, (_, i) => ({
+            month: format(subMonths(now, 5 - i), 'MMM'),
+            amount: Math.round((monthlySpend + (Math.random() - 0.5) * 20) * 100) / 100,
+        }));
+    }, [optimisticSubs]);
+
+    // ── Handlers ──
+    const handleAdd = useCallback(
+        async (data: SubscriptionFormData) => {
+            if (!user || !firestore) return;
+
+            if (editingSubscription) {
+                // Update
+                try {
+                    const ref = doc(
+                        firestore,
+                        'users',
+                        user.uid,
+                        'subscriptions',
+                        editingSubscription.id
+                    );
+                    await updateDoc(ref, {
+                        ...data,
+                        renewalDate: Timestamp.fromDate(new Date(data.renewalDate)),
+                        updatedAt: Timestamp.now(),
+                    });
+                    toast({ title: 'Updated', description: `${data.name} has been updated.` });
+                } catch {
+                    toast({ title: 'Error', description: 'Failed to update subscription.', variant: 'destructive' });
+                }
+                setEditingSubscription(null);
+                return;
+            }
+
+            // Add with optimistic update
+            const tempId = `temp_${Date.now()}`;
+            const optimisticSub: Subscription = {
+                id: tempId,
+                ...data,
+                renewalDate: new Date(data.renewalDate),
+                userId: user.uid,
+                source: 'manual',
+                createdAt: new Date(),
+                updatedAt: new Date(),
+            };
+
+            addOptimistic({ type: 'add', payload: optimisticSub });
+
+            try {
+                const ref = doc(collection(firestore, 'users', user.uid, 'subscriptions'));
+                await setDoc(ref, {
+                    ...data,
+                    id: ref.id,
+                    userId: user.uid,
+                    source: 'manual',
+                    renewalDate: Timestamp.fromDate(new Date(data.renewalDate)),
+                    createdAt: Timestamp.now(),
+                    updatedAt: Timestamp.now(),
+                });
+                toast({ title: 'Added', description: `${data.name} is now being tracked.` });
+            } catch {
+                toast({ title: 'Error', description: 'Failed to add subscription.', variant: 'destructive' });
+            }
+        },
+        [user, firestore, editingSubscription, addOptimistic, toast]
+    );
+
+    const handleDelete = useCallback(
+        async (id: string) => {
+            if (!user || !firestore) return;
+
+            addOptimistic({ type: 'delete', payload: id });
+
+            try {
+                await deleteDoc(doc(firestore, 'users', user.uid, 'subscriptions', id));
+                toast({ title: 'Deleted', description: 'Subscription removed.' });
+            } catch {
+                toast({ title: 'Error', description: 'Failed to delete subscription.', variant: 'destructive' });
+            }
+        },
+        [user, firestore, addOptimistic, toast]
+    );
+
+    const handleEdit = (sub: Subscription) => {
+        setEditingSubscription(sub);
+        setModalOpen(true);
+    };
+
+    const handleOpenNewModal = () => {
         setEditingSubscription(null);
-    }
-    
-    const displaySubscriptions = filteredAndSortedSubscriptions ?? processedSubscriptions;
+        setModalOpen(true);
+    };
 
     return (
-        <main className="container p-4 sm:p-6 md:p-8">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold tracking-tight">
-                    Welcome back, {userData?.firstName || user?.email || ''}!
-                </h1>
-                <p className="text-muted-foreground mt-2">
-                    Here&apos;s a snapshot of your subscriptions. Stay in control of your spending.
-                </p>
-            </div>
-            
-            <div className="max-w-7xl mx-auto space-y-8">
-                <DashboardStats subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
-                
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    <div className="lg:col-span-2 space-y-8">
-                        <SubscriptionControls
-                            searchTerm={searchTerm}
-                            onSearchChange={setSearchTerm}
-                            filterCategory={filterCategory}
-                            onCategoryChange={setFilterCategory}
-                            sortOption={sortOption}
-                            onSortChange={setSortOption}
-                        />
-                        <SubscriptionList 
-                            subscriptions={displaySubscriptions} 
-                            isLoading={isLoadingSubscriptions} 
-                            error={subscriptionsError}
-                            onEdit={handleEdit} 
-                        />
-                    </div>
-                    <div className="lg:col-span-1 space-y-8">
-                        <UpcomingRenewals subscriptions={processedSubscriptions} isLoading={isLoadingSubscriptions} />
-                        <AIInsightsPanel subscriptions={processedSubscriptions ?? []} />
-                    </div>
+        <div className="space-y-6">
+            {/* Header */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">
+                        Welcome back, {userData?.firstName || user?.email?.split('@')[0] || ''}
+                    </h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Here&apos;s your subscription overview. Stay in control.
+                    </p>
                 </div>
+                <Button onClick={handleOpenNewModal} size="sm">
+                    <Plus className="mr-1.5 h-4 w-4" />
+                    Add Subscription
+                </Button>
+            </div>
 
-                <div id="add-subscription-form">
-                    <AddSubscriptionForm 
-                        subscriptionToEdit={editingSubscription} 
-                        onFinishEditing={handleFinishEditing} 
+            {/* Stats */}
+            <StatsCards stats={stats} isLoading={isLoading} />
+
+            {/* Main Grid */}
+            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+                <div className="lg:col-span-2 space-y-6">
+                    <FinancialPulse data={trendData} />
+                    <SubscriptionTable
+                        subscriptions={filteredSubscriptions}
+                        isLoading={isLoading}
+                        searchTerm={searchTerm}
+                        onSearchChange={setSearchTerm}
+                        filterCategory={filterCategory}
+                        onCategoryChange={setFilterCategory}
+                        onEdit={handleEdit}
+                        onDelete={handleDelete}
                     />
                 </div>
+                <div className="space-y-6">
+                    <QuickSyncCard />
+                    <UpcomingRenewals subscriptions={optimisticSubs} isLoading={isLoading} />
+                </div>
             </div>
-        </main>
+
+            {/* Modal */}
+            <AddSubscriptionModal
+                open={modalOpen}
+                onOpenChange={setModalOpen}
+                onSubmit={handleAdd}
+                editingSubscription={editingSubscription}
+            />
+        </div>
     );
 }

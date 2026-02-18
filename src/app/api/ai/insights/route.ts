@@ -1,19 +1,15 @@
-import { NextResponse } from "next/server";
-import { generateAIInsights } from "@/ai/insights";
+import { NextResponse } from 'next/server';
+import { analyzeSpending } from '@/lib/genkit';
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-
-    const insights = await generateAIInsights({
-      subscriptions: body.subscriptions,
-    });
-
-    return NextResponse.json({ insights });
+    const result = await analyzeSpending(body.subscriptions ?? []);
+    return NextResponse.json({ insights: result.insights });
   } catch (error) {
-    console.error("AI Insights error:", error);
+    console.error('AI Insights error:', error);
     return NextResponse.json(
-      { error: "Failed to generate insights" },
+      { error: 'Failed to generate insights' },
       { status: 500 }
     );
   }
