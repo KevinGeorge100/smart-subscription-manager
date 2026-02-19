@@ -2,6 +2,34 @@
 # https://firebase.google.com/docs/app-hosting/configure
 
 runConfig:
-  # Increase this value if you'd like to automatically spin up
-  # more instances in response to increased traffic.
-  maxInstances: 1
+  # Automatically scale up to handle traffic spikes.
+  maxInstances: 3
+  minInstances: 0
+  concurrency: 80
+  cpu: 1
+  memoryMiB: 512
+
+env:
+  # ── Firebase Admin ─────────────────────────────────────────────────────────
+  - variable: FIREBASE_PROJECT_ID
+    secret: FIREBASE_PROJECT_ID
+  - variable: FIREBASE_CLIENT_EMAIL
+    secret: FIREBASE_CLIENT_EMAIL
+  - variable: FIREBASE_PRIVATE_KEY
+    secret: FIREBASE_PRIVATE_KEY
+
+  # ── Genkit / Gemini ────────────────────────────────────────────────────────
+  - variable: GOOGLE_GENAI_API_KEY
+    secret: GOOGLE_GENAI_API_KEY
+
+  # ── Gmail OAuth2 ───────────────────────────────────────────────────────────
+  - variable: GOOGLE_CLIENT_ID
+    secret: GOOGLE_CLIENT_ID
+  - variable: GOOGLE_CLIENT_SECRET
+    secret: GOOGLE_CLIENT_SECRET
+  - variable: GOOGLE_REDIRECT_URI
+    secret: GOOGLE_REDIRECT_URI
+
+  # ── Token Encryption ───────────────────────────────────────────────────────
+  - variable: ENCRYPTION_KEY
+    secret: ENCRYPTION_KEY

@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useMemo, useOptimistic, useCallback } from 'react';
+import { useState, useMemo, useOptimistic, useCallback, useEffect } from 'react';
 import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@/firebase';
+import { getGmailConnectionStatus } from '@/actions/gmail';
+import type { ConnectedEmail } from '@/actions/gmail';
 import { doc, collection, deleteDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import type { User, Subscription, SubscriptionFormData, DashboardStats, SpendingTrendPoint } from '@/types';
 import { differenceInDays, addDays, subMonths, format } from 'date-fns';
@@ -28,6 +30,19 @@ export default function DashboardPage() {
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
+
+    // Gmail connection status — array of all connected accounts
+    const [gmailAccounts, setGmailAccounts] = useState<ConnectedEmail[]>([]);
+
+    const fetchGmailStatus = useCallback(async () => {
+        if (!user?.uid) return;
+        const { accounts } = await getGmailConnectionStatus(user.uid);
+        setGmailAccounts(accounts);
+    }, [user?.uid]);
+
+    useEffect(() => {
+        fetchGmailStatus();
+    }, [fetchGmailStatus]);
 
     // Filter state
     const [searchTerm, setSearchTerm] = useState('');
@@ -255,7 +270,11 @@ export default function DashboardPage() {
                     />
                 </div>
                 <div className="space-y-6">
-                    <QuickSyncCard />
+                    <QuickSyncCard
+                        userId={user?.uid ?? ''}
+                        accounts={gmailAccounts}
+                        onAccountsChanged={fetchGmailStatus}
+                    />
                     <UpcomingRenewals subscriptions={optimisticSubs} isLoading={isLoading} />
                 </div>
             </div>
