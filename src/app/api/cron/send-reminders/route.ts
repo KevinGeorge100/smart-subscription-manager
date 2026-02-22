@@ -133,7 +133,7 @@ export async function GET(request: Request) {
             // A. Send email
             if (notifSettings.email) {
                 await transporter.sendMail({
-                    from: '"Smart Subscription Manager" <no-reply@yourdomain.com>',
+                    from: `"Smart Subscription Manager" <${process.env.SMTP_USER}>`,
                     to: user.email,
                     subject: 'Upcoming Subscription Renewals',
                     html: generateReminderEmailHTML(user, userSubscriptions),
@@ -150,7 +150,7 @@ export async function GET(request: Request) {
                     title: 'Subscription Renewal Alert',
                     message: userSubscriptions.length === 1
                         ? `Your ${userSubscriptions[0].name} subscription is renewing in ${differenceInDays((userSubscriptions[0].renewalDate as any).toDate(), new Date())} days.`
-                        : `You have ${userSubscriptions.length} subscriptions renewing in the next $7 days.`,
+                        : `You have ${userSubscriptions.length} subscriptions renewing in the next ${REMINDER_WINDOW_DAYS} days.`,
                     type: 'renewal',
                     read: false,
                     createdAt: now,

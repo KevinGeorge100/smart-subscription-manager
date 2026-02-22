@@ -40,6 +40,10 @@ next-env.d.ts
 
 firebase-admin.json
 serviceAccountKey.json
+firebase-debug.log
+
+# IDE / editor
+.idx/
 
 # secrets
 deploy-secrets.ps1

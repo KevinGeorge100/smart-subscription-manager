@@ -201,7 +201,7 @@ export default function SettingsPage() {
                                         <div className="space-y-1">
                                             <p className="text-sm font-medium">Standard Reminder Schedule</p>
                                             <p className="text-xs text-muted-foreground leading-relaxed">
-                                                Reminders are currently sent 7 days and 48 hours before each subscription's renewal date.
+                                                Reminders are currently sent 7 days and 48 hours before each subscription&apos;s renewal date.
                                                 You can mute these per-device by disabling browser notifications.
                                             </p>
                                         </div>
