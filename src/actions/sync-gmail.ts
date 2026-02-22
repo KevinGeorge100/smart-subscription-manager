@@ -200,7 +200,7 @@ export async function syncGmail(userId: string): Promise<SyncGmailResult> {
                                 name: extracted.name,
                                 amount: extracted.amount,
                                 billingCycle: extracted.billingCycle,
-                                // Map to closest known category or fall back to Others
+                                // Category mapping is not yet implemented; default to Others
                                 category: 'Others' as Category,
                                 renewalDate: new Date(extracted.renewalDate),
                             },

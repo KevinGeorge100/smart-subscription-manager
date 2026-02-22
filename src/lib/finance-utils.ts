@@ -73,10 +73,11 @@ export function calculateOptimization(
             .filter((s) => s.billingCycle === 'yearly' && isSameMonth(s.renewalDate, targetDate))
             .reduce((sum, s) => sum + (s.amountInBaseCurrency ?? s.amount), 0);
 
+    const CURRENT_MONTH_INDEX = 5; // months[0..4] = past, months[5] = current, months[6..11] = future
+
     return months.map((month, index) => {
         // Map month label back to an approximate date
-        // months[5] = current month, months[6..11] = future
-        const offset = index - 5; // negative = past, 0 = current, positive = future
+        const offset = index - CURRENT_MONTH_INDEX; // negative = past, 0 = current, positive = future
         const date = offset >= 0 ? addMonths(now, offset) : subMonths(now, -offset);
 
         // Only show optimized on projected portion (current month onward)
