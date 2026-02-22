@@ -20,9 +20,9 @@ import { SubZeroLogo } from '@/components/ui/logo';
 
 const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Subscriptions', href: '/dashboard', icon: CreditCard },
-    { label: 'Analytics', href: '/dashboard', icon: BarChart3 },
-    { label: 'Settings', href: '/dashboard', icon: Settings },
+    { label: 'Subscriptions', href: '/dashboard/subscriptions', icon: CreditCard },
+    { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+    { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {

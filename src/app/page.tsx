@@ -377,6 +377,8 @@ function FinalCTA() {
 // Main Page
 // ──────────────────────────────────────
 
+import { MarketingLayout } from '@/components/marketing/layout';
+
 export default function LandingPage() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -384,46 +386,10 @@ export default function LandingPage() {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 100]);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* ─── Sticky Frosted Nav ─── */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-background/60 backdrop-blur-2xl">
-        <div className="container flex h-16 max-w-screen-2xl items-center">
-          <Link href="/" className="flex items-center gap-2.5">
-            <SubZeroLogo className="h-8 w-8" />
-            <span className="text-lg font-bold tracking-tight">SubZero</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6 ml-10">
-            {['Features', 'Pricing', 'Docs'].map((item) => (
-              <Link
-                key={item}
-                href={item === 'Features' ? '#features' : '#'}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {item}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                Login
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm" className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-0">
-                Get Started
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <MarketingLayout>
       <main className="flex-1">
         {/* ─── HERO ─── */}
-        <section ref={heroRef} className="relative overflow-hidden pt-16 pb-8 md:pt-24 md:pb-16 lg:pt-32">
+        <section id="hero" ref={heroRef} className="relative overflow-hidden pt-16 pb-8 md:pt-24 md:pb-16 lg:pt-32">
           {/* Multi-layer background */}
           <div className="absolute inset-0 -z-10">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(217_91%_60%/0.08),transparent_70%)]" />
@@ -501,29 +467,13 @@ export default function LandingPage() {
         <StatsSection />
 
         {/* ─── BENTO FEATURES ─── */}
-        <BentoGrid />
+        <div id="features">
+          <BentoGrid />
+        </div>
 
         {/* ─── FINAL CTA ─── */}
         <FinalCTA />
       </main>
-
-      {/* ─── FOOTER ─── */}
-      <footer className="border-t border-border/30 py-10">
-        <div className="container max-w-6xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <SubZeroLogo className="h-7 w-7" />
-            <span className="text-sm font-bold">SubZero</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="#" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Terms</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Contact</Link>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} SubZero. Made in India 🇮🇳
-          </p>
-        </div>
-      </footer>
-    </div>
+    </MarketingLayout>
   );
 }

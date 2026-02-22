@@ -17,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import Link from 'next/link';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -44,6 +45,7 @@ interface SubscriptionTableProps {
     onEdit: (sub: Subscription) => void;
     onDelete: (id: string) => void;
     onVerify: (id: string) => void;
+    isCompact?: boolean;
 }
 
 export function SubscriptionTable({
@@ -56,6 +58,7 @@ export function SubscriptionTable({
     onEdit,
     onDelete,
     onVerify,
+    isCompact = false,
 }: SubscriptionTableProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
 
@@ -93,28 +96,38 @@ export function SubscriptionTable({
                         </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                        <div className="relative flex-1 sm:w-48">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search..."
-                                className="pl-8 bg-muted/30"
-                                value={searchTerm}
-                                onChange={(e) => onSearchChange(e.target.value)}
-                            />
-                        </div>
-                        <Select value={filterCategory} onValueChange={onCategoryChange}>
-                            <SelectTrigger className="w-[140px] bg-muted/30">
-                                <SelectValue placeholder="Category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Categories</SelectItem>
-                                {CATEGORIES.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>
-                                        {cat}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {isCompact ? (
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/dashboard/subscriptions" className="text-xs">
+                                    View All
+                                </Link>
+                            </Button>
+                        ) : (
+                            <>
+                                <div className="relative flex-1 sm:w-48">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search..."
+                                        className="pl-8 bg-muted/30"
+                                        value={searchTerm}
+                                        onChange={(e) => onSearchChange(e.target.value)}
+                                    />
+                                </div>
+                                <Select value={filterCategory} onValueChange={onCategoryChange}>
+                                    <SelectTrigger className="w-[140px] bg-muted/30">
+                                        <SelectValue placeholder="Category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Categories</SelectItem>
+                                        {CATEGORIES.map((cat) => (
+                                            <SelectItem key={cat} value={cat}>
+                                                {cat}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </>
+                        )}
                     </div>
                 </div>
             </CardHeader>
