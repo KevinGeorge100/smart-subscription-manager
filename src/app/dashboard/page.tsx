@@ -36,6 +36,12 @@ export default function DashboardPage() {
     const { insights, isLoading: isAIAnalysisLoading } = useAIInsights(subscriptions);
     const { toast } = useToast();
 
+    // Hydration guard
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
     // Auto-sync logic
     useEffect(() => {
         if (gmailAccounts.length === 0 || !user?.uid) return;
@@ -128,7 +134,7 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">
-                        Welcome back, {userData?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || ''}
+                        Welcome back, {mounted ? (userData?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || '') : '...'}
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
                         Here&apos;s your subscription overview. Stay in control.

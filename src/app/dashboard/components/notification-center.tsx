@@ -21,6 +21,8 @@ const getIcon = (type: NotificationType) => {
 
 export function NotificationCenter() {
     const { notifications, unreadCount, markAsRead, markAllAsRead, isLoading } = useNotifications();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
     return (
         <Popover>
@@ -73,7 +75,7 @@ export function NotificationCenter() {
                                             {n.message}
                                         </p>
                                         <p className="text-[10px] text-zinc-500 mt-2">
-                                            {n.createdAt?.toDate ? format(n.createdAt.toDate(), 'MMM d, h:mm a') : 'Just now'}
+                                            {mounted && n.createdAt?.toDate ? format(n.createdAt.toDate(), 'MMM d, h:mm a') : 'Just now'}
                                         </p>
                                     </div>
                                     {!n.read && (

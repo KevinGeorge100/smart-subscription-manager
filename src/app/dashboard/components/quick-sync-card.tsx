@@ -33,6 +33,9 @@ interface QuickSyncCardProps {
 export function QuickSyncCard({ userId, accounts, onAccountsChanged }: QuickSyncCardProps) {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     const connectUrl = `/api/gmail/connect?userId=${encodeURIComponent(userId)}`;
     const isConnected = accounts.length > 0;
 
@@ -105,9 +108,11 @@ export function QuickSyncCard({ userId, accounts, onAccountsChanged }: QuickSync
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium truncate">{account.email}</p>
                             <p className="text-xs text-muted-foreground">
-                                {account.lastSyncedAt
+                                {mounted && account.lastSyncedAt
                                     ? `Synced ${formatDistanceToNow(new Date(account.lastSyncedAt), { addSuffix: true })}`
-                                    : `Connected ${formatDistanceToNow(new Date(account.connectedAt), { addSuffix: true })}`}
+                                    : mounted && account.connectedAt
+                                        ? `Connected ${formatDistanceToNow(new Date(account.connectedAt), { addSuffix: true })}`
+                                        : 'Processing...'}
                             </p>
                         </div>
                         <Button

@@ -69,6 +69,10 @@ function BurnTooltip({ active, payload, label }: {
 
 export function FinancialPulse({ data, currentMonth, annualSavings = 0 }: FinancialPulseProps) {
     const [showOptimized, setShowOptimized] = useState(false);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
     const totalProjected = data.reduce((sum, p) => sum + (p.projected ?? 0), 0);
 
@@ -133,109 +137,115 @@ export function FinancialPulse({ data, currentMonth, annualSavings = 0 }: Financ
 
             <CardContent>
                 <div className="h-[280px] w-full">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <ComposedChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
-                            <defs>
-                                {/* Actual — blue */}
-                                <linearGradient id="gradActual" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.35} />
-                                    <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
-                                </linearGradient>
-                                {/* Projected — cyan */}
-                                <linearGradient id="gradProjected" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(189 94% 43%)" stopOpacity={0.25} />
-                                    <stop offset="95%" stopColor="hsl(189 94% 43%)" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
+                    {!mounted ? (
+                        <div className="h-full w-full bg-muted/20 animate-pulse rounded-lg flex items-center justify-center">
+                            <p className="text-xs text-muted-foreground">Loading chart...</p>
+                        </div>
+                    ) : (
+                        <ResponsiveContainer width="100%" height="100%">
+                            <ComposedChart data={data} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                                <defs>
+                                    {/* Actual — blue */}
+                                    <linearGradient id="gradActual" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="hsl(217 91% 60%)" stopOpacity={0.35} />
+                                        <stop offset="95%" stopColor="hsl(217 91% 60%)" stopOpacity={0} />
+                                    </linearGradient>
+                                    {/* Projected — cyan */}
+                                    <linearGradient id="gradProjected" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="hsl(189 94% 43%)" stopOpacity={0.25} />
+                                        <stop offset="95%" stopColor="hsl(189 94% 43%)" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
 
-                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 28% 16%)" vertical={false} />
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(215 28% 16%)" vertical={false} />
 
-                            <XAxis
-                                dataKey="month"
-                                tick={{ fill: 'hsl(215 20% 55%)', fontSize: 11 }}
-                                axisLine={false}
-                                tickLine={false}
-                            />
-                            <YAxis
-                                tick={{ fill: 'hsl(215 20% 55%)', fontSize: 11 }}
-                                axisLine={false}
-                                tickLine={false}
-                                tickFormatter={(v: number) => `₹${v}`}
-                                width={55}
-                            />
-
-                            <Tooltip content={<BurnTooltip />} />
-
-                            <Legend
-                                iconType="circle"
-                                iconSize={8}
-                                wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
-                                formatter={(value: string) => {
-                                    if (value === 'actual') return 'Actual Spend';
-                                    if (value === 'projected') return 'Projected Spend';
-                                    return 'Optimized Path';
-                                }}
-                            />
-
-                            {/* Today reference line */}
-                            <ReferenceLine
-                                x={currentMonth}
-                                stroke="hsl(215 20% 40%)"
-                                strokeDasharray="4 4"
-                                label={{
-                                    value: 'Today',
-                                    position: 'insideTopRight',
-                                    fill: 'hsl(215 20% 55%)',
-                                    fontSize: 10,
-                                }}
-                            />
-
-                            {/* Actual spend — solid blue area */}
-                            <Area
-                                type="monotone"
-                                dataKey="actual"
-                                name="actual"
-                                stroke="hsl(217 91% 60%)"
-                                strokeWidth={2}
-                                fill="url(#gradActual)"
-                                connectNulls
-                                dot={false}
-                                activeDot={{ r: 4, strokeWidth: 0 }}
-                            />
-
-                            {/* Projected spend — dashed cyan area */}
-                            <Area
-                                type="monotone"
-                                dataKey="projected"
-                                name="projected"
-                                stroke="hsl(189 94% 43%)"
-                                strokeWidth={2}
-                                strokeDasharray="5 3"
-                                fill="url(#gradProjected)"
-                                connectNulls
-                                dot={false}
-                                activeDot={{ r: 4, strokeWidth: 0 }}
-                            />
-
-                            {/* Optimized path — green dashed line (Framer Motion fade) */}
-                            {showOptimized && (
-                                <Line
-                                    type="monotone"
-                                    dataKey="optimized"
-                                    name="optimized"
-                                    stroke="hsl(142 76% 36%)"
-                                    strokeWidth={2}
-                                    strokeDasharray="6 3"
-                                    dot={false}
-                                    activeDot={{ r: 4, strokeWidth: 0, fill: 'hsl(142 76% 36%)' }}
-                                    connectNulls
-                                    isAnimationActive={true}
-                                    animationDuration={600}
-                                    animationEasing="ease-out"
+                                <XAxis
+                                    dataKey="month"
+                                    tick={{ fill: 'hsl(215 20% 55%)', fontSize: 11 }}
+                                    axisLine={false}
+                                    tickLine={false}
                                 />
-                            )}
-                        </ComposedChart>
-                    </ResponsiveContainer>
+                                <YAxis
+                                    tick={{ fill: 'hsl(215 20% 55%)', fontSize: 11 }}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tickFormatter={(v: number) => `₹${v}`}
+                                    width={55}
+                                />
+
+                                <Tooltip content={<BurnTooltip />} />
+
+                                <Legend
+                                    iconType="circle"
+                                    iconSize={8}
+                                    wrapperStyle={{ fontSize: '11px', paddingTop: '8px' }}
+                                    formatter={(value: string) => {
+                                        if (value === 'actual') return 'Actual Spend';
+                                        if (value === 'projected') return 'Projected Spend';
+                                        return 'Optimized Path';
+                                    }}
+                                />
+
+                                {/* Today reference line */}
+                                <ReferenceLine
+                                    x={currentMonth}
+                                    stroke="hsl(215 20% 40%)"
+                                    strokeDasharray="4 4"
+                                    label={{
+                                        value: 'Today',
+                                        position: 'insideTopRight',
+                                        fill: 'hsl(215 20% 55%)',
+                                        fontSize: 10,
+                                    }}
+                                />
+
+                                {/* Actual spend — solid blue area */}
+                                <Area
+                                    type="monotone"
+                                    dataKey="actual"
+                                    name="actual"
+                                    stroke="hsl(217 91% 60%)"
+                                    strokeWidth={2}
+                                    fill="url(#gradActual)"
+                                    connectNulls
+                                    dot={false}
+                                    activeDot={{ r: 4, strokeWidth: 0 }}
+                                />
+
+                                {/* Projected spend — dashed cyan area */}
+                                <Area
+                                    type="monotone"
+                                    dataKey="projected"
+                                    name="projected"
+                                    stroke="hsl(189 94% 43%)"
+                                    strokeWidth={2}
+                                    strokeDasharray="5 3"
+                                    fill="url(#gradProjected)"
+                                    connectNulls
+                                    dot={false}
+                                    activeDot={{ r: 4, strokeWidth: 0 }}
+                                />
+
+                                {/* Optimized path — green dashed line (Framer Motion fade) */}
+                                {showOptimized && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="optimized"
+                                        name="optimized"
+                                        stroke="hsl(142 76% 36%)"
+                                        strokeWidth={2}
+                                        strokeDasharray="6 3"
+                                        dot={false}
+                                        activeDot={{ r: 4, strokeWidth: 0, fill: 'hsl(142 76% 36%)' }}
+                                        connectNulls
+                                        isAnimationActive={true}
+                                        animationDuration={600}
+                                        animationEasing="ease-out"
+                                    />
+                                )}
+                            </ComposedChart>
+                        </ResponsiveContainer>
+                    )}
                 </div>
 
                 {/* Framer-animated hint below chart when toggle is on */}
