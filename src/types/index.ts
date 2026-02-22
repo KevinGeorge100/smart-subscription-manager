@@ -10,6 +10,12 @@ export interface User {
   lastName: string;
   email: string;
   createdAt?: Date;
+  settings?: {
+    notifications: {
+      email: boolean;
+      dashboard: boolean;
+    };
+  };
 }
 
 // ──────────────────────────────────────────────
@@ -112,7 +118,7 @@ export interface BurnDataPoint {
 export interface AIInsight {
   title: string;
   summary: string;
-  type: 'saving' | 'warning' | 'tip';
+  type: 'saving' | 'warning' | 'tip' | 'kill';
   confidence: number; // 0–1
 }
 

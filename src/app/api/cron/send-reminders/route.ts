@@ -128,33 +128,38 @@ export async function GET(request: Request) {
 
             const user = userDoc.data() as UserAccount;
             const userSubscriptions = subsByUserId[userId];
+            const notifSettings = user.settings?.notifications || { email: true, dashboard: true };
 
             // A. Send email
-            await transporter.sendMail({
-                from: '"Smart Subscription Manager" <no-reply@yourdomain.com>',
-                to: user.email,
-                subject: 'Upcoming Subscription Renewals',
-                html: generateReminderEmailHTML(user, userSubscriptions),
-            });
-            emailsSent++;
+            if (notifSettings.email) {
+                await transporter.sendMail({
+                    from: '"Smart Subscription Manager" <no-reply@yourdomain.com>',
+                    to: user.email,
+                    subject: 'Upcoming Subscription Renewals',
+                    html: generateReminderEmailHTML(user, userSubscriptions),
+                });
+                emailsSent++;
+            }
 
             // B. Create Dashboard Notification
-            const notificationRef = adminDb.collection('users').doc(userId).collection('notifications').doc();
-            batch.set(notificationRef, {
-                id: notificationRef.id,
-                userId,
-                title: 'Subscription Renewal Alert',
-                message: userSubscriptions.length === 1
-                    ? `Your ${userSubscriptions[0].name} subscription is renewing in ${differenceInDays((userSubscriptions[0].renewalDate as any).toDate(), new Date())} days.`
-                    : `You have ${userSubscriptions.length} subscriptions renewing in the next 7 days.`,
-                type: 'renewal',
-                read: false,
-                createdAt: now,
-                metadata: {
-                    subscriptionId: userSubscriptions.length === 1 ? userSubscriptions[0].id : undefined,
-                    amount: userSubscriptions.reduce((sum, sub) => sum + sub.amount, 0),
-                }
-            });
+            if (notifSettings.dashboard) {
+                const notificationRef = adminDb.collection('users').doc(userId).collection('notifications').doc();
+                batch.set(notificationRef, {
+                    id: notificationRef.id,
+                    userId,
+                    title: 'Subscription Renewal Alert',
+                    message: userSubscriptions.length === 1
+                        ? `Your ${userSubscriptions[0].name} subscription is renewing in ${differenceInDays((userSubscriptions[0].renewalDate as any).toDate(), new Date())} days.`
+                        : `You have ${userSubscriptions.length} subscriptions renewing in the next $7 days.`,
+                    type: 'renewal',
+                    read: false,
+                    createdAt: now,
+                    metadata: {
+                        subscriptionId: userSubscriptions.length === 1 ? userSubscriptions[0].id : undefined,
+                        amount: userSubscriptions.reduce((sum, sub) => sum + sub.amount, 0),
+                    }
+                });
+            }
 
             // C. Mark subscriptions as reminded in a batch
             userSubscriptions.forEach(sub => {
