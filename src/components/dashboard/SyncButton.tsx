@@ -14,26 +14,36 @@ interface SyncButtonProps {
     userId: string;
     accountCount: number;
     onSyncComplete?: () => void;
+    timeframe?: string;
+    variant?: 'default' | 'outline' | 'ghost' | 'secondary';
+    label?: string;
 }
 
-export function SyncButton({ userId, accountCount, onSyncComplete }: SyncButtonProps) {
+export function SyncButton({
+    userId,
+    accountCount,
+    onSyncComplete,
+    timeframe = '30d',
+    variant = 'default',
+    label
+}: SyncButtonProps) {
     const [isPending, startTransition] = useTransition();
     const { toast } = useToast();
 
     function handleSync() {
         startTransition(async () => {
-            const result = await syncSubscriptions(userId);
+            const result = await syncSubscriptions(userId, timeframe);
 
             if (result.success) {
                 onSyncComplete?.();
                 if (result.added === 0) {
                     toast({
-                        title: '✅ Sync Complete',
+                        title: `✅ ${timeframe === '30d' ? 'Quick' : 'Deep'} Sync Complete`,
                         description: `Scanned ${result.scanned} emails across ${result.accountsScanned} account${result.accountsScanned === 1 ? '' : 's'} — no new subscriptions found.`,
                     });
                 } else {
                     toast({
-                        title: '✅ Sync Complete',
+                        title: `✅ ${timeframe === '30d' ? 'Quick' : 'Deep'} Sync Complete`,
                         description: `Found ${result.added} new subscription${result.added === 1 ? '' : 's'} from ${result.scanned} emails across ${result.accountsScanned} account${result.accountsScanned === 1 ? '' : 's'}.`,
                     });
                 }
@@ -52,17 +62,18 @@ export function SyncButton({ userId, accountCount, onSyncComplete }: SyncButtonP
             onClick={handleSync}
             disabled={isPending}
             size="sm"
+            variant={variant}
             className="w-full"
         >
             {isPending ? (
                 <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Scanning {accountCount} inbox{accountCount === 1 ? '' : 'es'}…
+                    {timeframe === '30d' ? 'Scanning...' : 'Deep Scanning...'}
                 </>
             ) : (
                 <>
                     <RefreshCw className="mr-2 h-4 w-4" />
-                    Sync All {accountCount > 1 ? `(${accountCount} accounts)` : ''}
+                    {label || `Sync All ${accountCount > 1 ? `(${accountCount})` : ''}`}
                 </>
             )}
         </Button>

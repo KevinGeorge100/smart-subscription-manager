@@ -40,7 +40,7 @@ function generateReminderEmailHTML(user: UserAccount, subscriptions: Subscriptio
         <li style="margin-bottom: 15px; padding: 10px; border: 1px solid #eee; border-radius: 5px;">
             <strong style="font-size: 1.1em;">${sub.name}</strong><br>
             Amount: ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(sub.amount)}<br>
-            Renews on: ${format(sub.renewalDate.toDate(), 'PPP')} (${differenceInDays(sub.renewalDate.toDate(), new Date())} days)
+            Renews on: ${format((sub.renewalDate as any).toDate(), 'PPP')} (${differenceInDays((sub.renewalDate as any).toDate(), new Date())} days)
         </li>
     `).join('');
 
@@ -97,8 +97,8 @@ export async function GET(request: Request) {
         snapshot.docs.forEach(doc => {
             const sub = doc.data() as Subscription;
             sub.id = doc.id;
-
-            const reminderSent = sub.reminderSentAt ? sub.reminderSentAt.toDate() : null;
+            const subData = doc.data() as any;
+            const reminderSent = subData.reminderSentAt ? subData.reminderSentAt.toDate() : null;
 
             if (!reminderSent || reminderSent < recentReminderThreshold) {
                 subsToRemind.push(sub);
@@ -138,7 +138,25 @@ export async function GET(request: Request) {
             });
             emailsSent++;
 
-            // B. Mark subscriptions as reminded in a batch
+            // B. Create Dashboard Notification
+            const notificationRef = adminDb.collection('users').doc(userId).collection('notifications').doc();
+            batch.set(notificationRef, {
+                id: notificationRef.id,
+                userId,
+                title: 'Subscription Renewal Alert',
+                message: userSubscriptions.length === 1
+                    ? `Your ${userSubscriptions[0].name} subscription is renewing in ${differenceInDays((userSubscriptions[0].renewalDate as any).toDate(), new Date())} days.`
+                    : `You have ${userSubscriptions.length} subscriptions renewing in the next 7 days.`,
+                type: 'renewal',
+                read: false,
+                createdAt: now,
+                metadata: {
+                    subscriptionId: userSubscriptions.length === 1 ? userSubscriptions[0].id : undefined,
+                    amount: userSubscriptions.reduce((sum, sub) => sum + sub.amount, 0),
+                }
+            });
+
+            // C. Mark subscriptions as reminded in a batch
             userSubscriptions.forEach(sub => {
                 const subRef = adminDb.doc(`users/${userId}/subscriptions/${sub.id}`);
                 batch.update(subRef, { reminderSentAt: now });

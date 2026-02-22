@@ -133,13 +133,23 @@ export function QuickSyncCard({ userId, accounts, onAccountsChanged }: QuickSync
                     </Button>
                 )}
 
-                {/* Sync All */}
+                {/* Sync All Actions */}
                 {isConnected && (
-                    <SyncButton
-                        userId={userId}
-                        accountCount={accounts.length}
-                        onSyncComplete={onAccountsChanged}
-                    />
+                    <div className="flex flex-col gap-2">
+                        <SyncButton
+                            userId={userId}
+                            accountCount={accounts.length}
+                            onSyncComplete={onAccountsChanged}
+                        />
+                        <SyncButton
+                            userId={userId}
+                            accountCount={accounts.length}
+                            onSyncComplete={onAccountsChanged}
+                            timeframe="730d" // ~24 months
+                            variant="outline"
+                            label="Deep Scan (Last 24 Months)"
+                        />
+                    </div>
                 )}
 
                 {/* Privacy note */}

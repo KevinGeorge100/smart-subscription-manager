@@ -116,8 +116,34 @@ export interface AIInsight {
   confidence: number; // 0–1
 }
 
+// ──────────────────────────────────────────────
+// AI Analysis Result
+// ──────────────────────────────────────────────
+
 export interface AIAnalysisResult {
   insights: AIInsight[];
   estimatedMonthlySavings: number;
   analyzedAt: Date;
+}
+
+// ──────────────────────────────────────────────
+// Notifications
+// ──────────────────────────────────────────────
+
+export type NotificationType = 'renewal' | 'saving' | 'warning' | 'info';
+
+export interface Notification {
+  id: string;
+  userId: string;
+  title: string;
+  message: string;
+  type: NotificationType;
+  read: boolean;
+  createdAt: Date | any; // allow Firestore Timestamps
+  link?: string;
+  metadata?: {
+    subscriptionId?: string;
+    amount?: number;
+    daysLeft?: number;
+  };
 }

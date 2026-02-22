@@ -17,6 +17,8 @@ import {
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { SubZeroLogo } from '@/components/ui/logo';
+import { NotificationCenter } from './components/notification-center';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -161,6 +163,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     </Button>
                     <div className="flex-1" />
                     <div className="flex items-center gap-3">
+                        <ThemeToggle />
+                        <NotificationCenter />
                         <span className="hidden sm:inline text-sm text-muted-foreground">
                             {user.displayName ?? user.uid}
                         </span>

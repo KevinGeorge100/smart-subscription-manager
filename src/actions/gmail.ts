@@ -111,15 +111,16 @@ function extractTextFromParts(
 
 async function scanGmailAccount(
     gmail: ReturnType<typeof google.gmail>,
-    accountLabel: string
+    accountLabel: string,
+    timeframe: string = '30d'
 ): Promise<string[]> {
     const query =
-        '(invoice OR receipt OR subscription OR billed OR "payment confirmation") newer_than:30d';
+        `(invoice OR receipt OR subscription OR billed OR "payment confirmation") newer_than:${timeframe}`;
 
     const listResponse = await gmail.users.messages.list({
         userId: 'me',
         q: query,
-        maxResults: 50,
+        maxResults: timeframe === '30d' ? 50 : 200, // Increase results for historical scans
     });
 
     const messages = listResponse.data.messages ?? [];
@@ -199,7 +200,10 @@ export async function getGmailConnectionStatus(userId: string): Promise<{
  * Syncs ALL connected Gmail accounts for the user.
  * Scans each inbox, batches emails through Gemini AI, saves detected subscriptions.
  */
-export async function syncSubscriptions(userId: string): Promise<{
+export async function syncSubscriptions(
+    userId: string,
+    timeframe: string = '30d'
+): Promise<{
     success: boolean;
     added?: number;
     scanned?: number;
@@ -228,7 +232,7 @@ export async function syncSubscriptions(userId: string): Promise<{
                 };
 
                 const gmail = await buildGmailClientFromDoc(userId, doc.id, encryptedTokens);
-                const texts = await scanGmailAccount(gmail, email);
+                const texts = await scanGmailAccount(gmail, email, timeframe);
                 allEmailTexts.push(...texts);
             })
         );
