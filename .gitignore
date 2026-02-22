@@ -46,3 +46,6 @@ deploy-secrets.ps1
 
 node_modules
 .next
+
+# firebase debug logs
+firebase-debug.log*
