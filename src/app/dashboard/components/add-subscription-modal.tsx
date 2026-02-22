@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
@@ -42,6 +42,9 @@ export function AddSubscriptionModal({
     onSubmit,
     editingSubscription,
 }: AddSubscriptionModalProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     const {
         register,
         handleSubmit,
@@ -87,6 +90,8 @@ export function AddSubscriptionModal({
     };
 
     const isEditing = !!editingSubscription;
+
+    if (!mounted) return null;
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
