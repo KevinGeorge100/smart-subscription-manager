@@ -10,16 +10,17 @@ export function useAnalytics(subscriptions: Subscription[]) {
     const currentMonthLabel = format(now, 'MMM yy');
 
     const burnData: BurnDataPoint[] = useMemo(() => {
-        const baseMonthlyCost = subscriptions.reduce((sum, sub) =>
-            sum + (sub.billingCycle === 'yearly' ? sub.amount / 12 : sub.amount), 0
-        );
+        const baseMonthlyCost = subscriptions.reduce((sum, sub) => {
+            const amount = sub.amountInBaseCurrency ?? sub.amount;
+            return sum + (sub.billingCycle === 'yearly' ? amount / 12 : amount);
+        }, 0);
 
         const round = (n: number) => Math.round(n * 100) / 100;
 
         const yearlyHitForMonth = (targetDate: Date): number =>
             subscriptions
                 .filter((s) => s.billingCycle === 'yearly' && isSameMonth(s.renewalDate, targetDate))
-                .reduce((sum, s) => sum + s.amount, 0);
+                .reduce((sum, s) => sum + (s.amountInBaseCurrency ?? s.amount), 0);
 
         const points: BurnDataPoint[] = [];
 

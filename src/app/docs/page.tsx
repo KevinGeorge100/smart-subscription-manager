@@ -2,6 +2,7 @@
 
 import { MarketingLayout } from '@/components/marketing/layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { BrainCircuit, Mail, Shield, Zap } from 'lucide-react';
 
 const sections = [
@@ -84,7 +85,7 @@ export default function DocsPage() {
 
                     <div className="mt-16 p-8 rounded-2xl border border-border/40 bg-card/20 text-center">
                         <h3 className="font-semibold mb-2">Still have questions?</h3>
-                        <p className="text-sm text-muted-foreground mb-6 italics">
+                        <p className="text-sm text-muted-foreground mb-6 italic">
                             Our support team is always here to help you optimize your cash flow.
                         </p>
                         <Button size="sm" variant="outline" className="rounded-lg">

@@ -18,7 +18,7 @@ export default function PrivacyPage() {
 
                         <div className="space-y-4">
                             <h2 className="text-xl font-semibold text-foreground">2. Security</h2>
-                            <p>Your data is encrypted using industry-standard protocols. We access your Gmail via secure OAuth tokens and nunca (never) store your login credentials.</p>
+                            <p>Your data is encrypted using industry-standard protocols. We access your Gmail via secure OAuth tokens and never store your login credentials.</p>
                         </div>
 
                         <div className="space-y-4">
