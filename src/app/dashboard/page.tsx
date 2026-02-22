@@ -5,8 +5,9 @@ import { useUser, useFirestore, useDoc, useCollection, useMemoFirebase } from '@
 import { getGmailConnectionStatus } from '@/actions/gmail';
 import type { ConnectedEmail } from '@/actions/gmail';
 import { doc, collection, deleteDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
-import type { User, Subscription, SubscriptionFormData, DashboardStats, SpendingTrendPoint } from '@/types';
-import { differenceInDays, addDays, subMonths, format } from 'date-fns';
+import type { User, Subscription, SubscriptionFormData, DashboardStats, BurnDataPoint } from '@/types';
+import { differenceInDays, addDays, addMonths, subMonths, format, isSameMonth } from 'date-fns';
+import { toINR, calculateOptimization, calculateAnnualSavings } from '@/lib/finance-utils';
 
 import { StatsCards } from './components/stats-cards';
 import { FinancialPulse } from './components/financial-pulse';
@@ -73,10 +74,16 @@ export default function DashboardPage() {
                     renewalDate = sub.renewalDate;
                 }
                 if (!renewalDate) return null;
+                const amount = typeof sub.amount === 'number' && !isNaN(sub.amount) ? sub.amount : 0;
+                const originalCurrency = sub.originalCurrency ?? 'INR';
                 return {
                     ...sub,
                     id: sub.id || '',
-                    amount: typeof sub.amount === 'number' && !isNaN(sub.amount) ? sub.amount : 0,
+                    amount,
+                    originalCurrency,
+                    // Normalize to INR for all financial calculations
+                    amountInBaseCurrency: toINR(amount, originalCurrency),
+                    verified: sub.verified ?? sub.source === 'manual',
                     renewalDate,
                     source: sub.source ?? 'manual',
                 } as Subscription;
@@ -111,14 +118,15 @@ export default function DashboardPage() {
         return subs;
     }, [optimisticSubs, searchTerm, filterCategory]);
 
-    // ── Dashboard stats ──
+    // ── Dashboard stats (INR-normalised) ──
     const stats: DashboardStats | null = useMemo(() => {
         if (isLoading) return null;
         const now = new Date();
-        const sevenDays = addDays(now, 7);
 
+        // Use amountInBaseCurrency (INR) for all monetary totals
         const totalMonthlySpend = optimisticSubs.reduce((sum, sub) => {
-            return sum + (sub.billingCycle === 'yearly' ? sub.amount / 12 : sub.amount);
+            const base = sub.amountInBaseCurrency ?? sub.amount;
+            return sum + (sub.billingCycle === 'yearly' ? base / 12 : base);
         }, 0);
 
         return {
@@ -133,18 +141,67 @@ export default function DashboardPage() {
         };
     }, [optimisticSubs, isLoading]);
 
-    // ── Spending trend (placeholder: last 6 months) ──
-    const trendData: SpendingTrendPoint[] = useMemo(() => {
-        const now = new Date();
-        const monthlySpend = optimisticSubs.reduce((sum, sub) => {
-            return sum + (sub.billingCycle === 'yearly' ? sub.amount / 12 : sub.amount);
-        }, 0);
+    // ── 12-Month Predictive Burn data ──
+    const now = new Date();
+    const currentMonthLabel = format(now, 'MMM yy');
 
-        return Array.from({ length: 6 }, (_, i) => ({
-            month: format(subMonths(now, 5 - i), 'MMM'),
-            amount: Math.round((monthlySpend + (Math.random() - 0.5) * 20) * 100) / 100,
-        }));
-    }, [optimisticSubs]);
+    const burnData: BurnDataPoint[] = useMemo(() => {
+        // Monthly equivalent spend across all subscriptions
+        const baseMonthlyCost = optimisticSubs.reduce((sum, sub) =>
+            sum + (sub.billingCycle === 'yearly' ? sub.amount / 12 : sub.amount), 0
+        );
+
+        const round = (n: number) => Math.round(n * 100) / 100;
+
+        // Helper: extra spend in a given month from yearly subs renewing then
+        const yearlyHitForMonth = (targetDate: Date): number =>
+            optimisticSubs
+                .filter((s) => s.billingCycle === 'yearly' && isSameMonth(s.renewalDate, targetDate))
+                .reduce((sum, s) => sum + s.amount, 0);
+
+        const points: BurnDataPoint[] = [];
+
+        // ── 5 past months (actual only) ──────────────────────────────────
+        for (let i = 5; i >= 1; i--) {
+            const date = subMonths(now, i);
+            points.push({
+                month: format(date, 'MMM yy'),
+                actual: round(baseMonthlyCost),
+            });
+        }
+
+        // ── Current month (bridges actual → projected) ───────────────────
+        points.push({
+            month: currentMonthLabel,
+            actual: round(baseMonthlyCost),
+            projected: round(baseMonthlyCost),
+        });
+
+        // ── 6 future months (projected only) ────────────────────────────
+        for (let i = 1; i <= 6; i++) {
+            const date = addMonths(now, i);
+            const hit = yearlyHitForMonth(date);
+            points.push({
+                month: format(date, 'MMM yy'),
+                projected: round(baseMonthlyCost + hit),
+            });
+        }
+
+        return points;
+    }, [optimisticSubs, currentMonthLabel]);
+
+    // ── Optimized path + annual savings (finance-utils) ──
+    const optimizedData = useMemo(
+        () => calculateOptimization(optimisticSubs, burnData.map((p) => p.month)),
+        [optimisticSubs, burnData]
+    );
+    const annualSavings = useMemo(() => calculateAnnualSavings(optimisticSubs), [optimisticSubs]);
+
+    // Merge optimized values into burnData for the chart
+    const burnDataWithOptimized: BurnDataPoint[] = useMemo(
+        () => burnData.map((point, i) => ({ ...point, optimized: optimizedData[i]?.optimized })),
+        [burnData, optimizedData]
+    );
 
     // ── Handlers ──
     const handleAdd = useCallback(
@@ -182,6 +239,9 @@ export default function DashboardPage() {
                 renewalDate: new Date(data.renewalDate),
                 userId: user.uid,
                 source: 'manual',
+                verified: true,           // manually added = pre-verified
+                originalCurrency: 'INR',
+                amountInBaseCurrency: data.amount,
                 createdAt: new Date(),
                 updatedAt: new Date(),
             };
@@ -223,6 +283,20 @@ export default function DashboardPage() {
         [user, firestore, addOptimistic, toast]
     );
 
+    const handleVerify = useCallback(
+        async (id: string) => {
+            if (!user || !firestore) return;
+            try {
+                const ref = doc(firestore, 'users', user.uid, 'subscriptions', id);
+                await updateDoc(ref, { verified: true, updatedAt: Timestamp.now() });
+                toast({ title: '✓ Verified', description: 'Subscription confirmed as accurate.' });
+            } catch {
+                toast({ title: 'Error', description: 'Failed to verify subscription.', variant: 'destructive' });
+            }
+        },
+        [user, firestore, toast]
+    );
+
     const handleEdit = (sub: Subscription) => {
         setEditingSubscription(sub);
         setModalOpen(true);
@@ -257,7 +331,11 @@ export default function DashboardPage() {
             {/* Main Grid */}
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-6">
-                    <FinancialPulse data={trendData} />
+                    <FinancialPulse
+                        data={burnDataWithOptimized}
+                        currentMonth={currentMonthLabel}
+                        annualSavings={annualSavings}
+                    />
                     <SubscriptionTable
                         subscriptions={filteredSubscriptions}
                         isLoading={isLoading}
@@ -267,6 +345,7 @@ export default function DashboardPage() {
                         onCategoryChange={setFilterCategory}
                         onEdit={handleEdit}
                         onDelete={handleDelete}
+                        onVerify={handleVerify}
                     />
                 </div>
                 <div className="space-y-6">

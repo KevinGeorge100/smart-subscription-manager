@@ -29,7 +29,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { BrainCircuit, Edit3, Search, Trash2, User } from 'lucide-react';
+import { BrainCircuit, CheckCircle2, Edit3, Search, Trash2, User } from 'lucide-react';
 import type { Subscription } from '@/types';
 import { CATEGORIES } from '@/types';
 import { format } from 'date-fns';
@@ -43,6 +43,7 @@ interface SubscriptionTableProps {
     onCategoryChange: (v: string) => void;
     onEdit: (sub: Subscription) => void;
     onDelete: (id: string) => void;
+    onVerify: (id: string) => void;
 }
 
 export function SubscriptionTable({
@@ -54,8 +55,12 @@ export function SubscriptionTable({
     onCategoryChange,
     onEdit,
     onDelete,
+    onVerify,
 }: SubscriptionTableProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const isUnverifiedAI = (sub: Subscription) =>
+        sub.source === 'ai-detected' && !sub.verified;
 
     if (isLoading) {
         return (
@@ -132,21 +137,29 @@ export function SubscriptionTable({
                             >
                                 {/* Name & Category */}
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <p className="font-medium text-sm truncate">{sub.name}</p>
-                                        <Badge
-                                            variant={
-                                                sub.source === 'ai-detected' ? 'default' : 'secondary'
-                                            }
-                                            className="text-[10px] px-1.5 py-0"
-                                        >
-                                            {sub.source === 'ai-detected' ? (
+                                        {/* Verification / source badge */}
+                                        {isUnverifiedAI(sub) ? (
+                                            <Badge
+                                                className="text-[10px] px-1.5 py-0 bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20"
+                                            >
                                                 <BrainCircuit className="h-3 w-3 mr-1" />
-                                            ) : (
+                                                ✨ AI Detected
+                                            </Badge>
+                                        ) : sub.source === 'ai-detected' && sub.verified ? (
+                                            <Badge
+                                                className="text-[10px] px-1.5 py-0 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                            >
+                                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                                Verified
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                                                 <User className="h-3 w-3 mr-1" />
-                                            )}
-                                            {sub.source === 'ai-detected' ? 'AI' : 'Manual'}
-                                        </Badge>
+                                                Manual
+                                            </Badge>
+                                        )}
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-0.5">
                                         {sub.category} · Renews{' '}
@@ -168,6 +181,18 @@ export function SubscriptionTable({
 
                                 {/* Actions */}
                                 <div className="flex items-center gap-1 shrink-0">
+                                    {/* Verify button — only for unverified AI subs */}
+                                    {isUnverifiedAI(sub) && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-emerald-400"
+                                            onClick={() => onVerify(sub.id)}
+                                            title="Mark as verified"
+                                        >
+                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="ghost"
                                         size="icon"

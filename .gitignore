@@ -41,5 +41,8 @@ next-env.d.ts
 firebase-admin.json
 serviceAccountKey.json
 
+# secrets
+deploy-secrets.ps1
+
 node_modules
 .next

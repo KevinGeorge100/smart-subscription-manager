@@ -45,6 +45,12 @@ export interface Subscription {
   renewalDate: Date;
   userId: string;
   source: SubscriptionSource;
+  /** True once the user has manually confirmed an AI-detected subscription. */
+  verified: boolean;
+  /** ISO 4217 currency code as received from the AI parser, e.g. "USD". */
+  originalCurrency: string;
+  /** Amount normalised to INR using hardcoded exchange rates. */
+  amountInBaseCurrency: number;
   reminderSentAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -85,6 +91,18 @@ export interface DashboardStats {
 export interface SpendingTrendPoint {
   month: string;
   amount: number;
+}
+
+/** One data point in the 12-Month Predictive Burn chart. */
+export interface BurnDataPoint {
+  /** Short month label, e.g. "Jan 26" */
+  month: string;
+  /** Actual spend (past months + current month). Undefined for future months. */
+  actual?: number;
+  /** Projected spend (current month onward). Undefined for purely past months. */
+  projected?: number;
+  /** Optimized projected spend if all monthly subs switch to yearly (20% saving). */
+  optimized?: number;
 }
 
 // ──────────────────────────────────────────────
