@@ -1,13 +1,17 @@
-import type {NextConfig} from 'next';
+﻿import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
   typescript: {
-    ignoreBuildErrors: true,
+    // Enable strict type checking for production builds
+    ignoreBuildErrors: false,
   },
   eslint: {
-    ignoreDuringBuilds: true,
+    // Enable ESLint checking for production builds
+    ignoreDuringBuilds: false,
   },
+  // Optimize for Vercel serverless deployment
+  serverExternalPackages: ['firebase-admin', 'nodemailer'],
   images: {
     remotePatterns: [
       {
