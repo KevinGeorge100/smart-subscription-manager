@@ -133,7 +133,7 @@ export async function GET(request: Request) {
             // A. Send email
             if (notifSettings.email) {
                 await transporter.sendMail({
-                    from: `"Smart Subscription Manager" <${process.env.SMTP_USER}>`,
+                    from: `"Smart Subscription Manager" <${process.env.SMTP_USER || 'noreply@example.com'}>`,
                     to: user.email,
                     subject: 'Upcoming Subscription Renewals',
                     html: generateReminderEmailHTML(user, userSubscriptions),
