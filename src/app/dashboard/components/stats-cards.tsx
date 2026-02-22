@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { CreditCard, IndianRupee, BrainCircuit, CalendarClock } from 'lucide-react';
 import type { DashboardStats } from '@/types';
@@ -43,6 +44,9 @@ const cards = [
 ];
 
 export function StatsCards({ stats, isLoading }: StatsCardsProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     return (
         <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
             {cards.map((card) => (
@@ -56,7 +60,7 @@ export function StatsCards({ stats, isLoading }: StatsCardsProps) {
                         </div>
                     </CardHeader>
                     <CardContent>
-                        {isLoading || !stats ? (
+                        {(isLoading || !stats || !mounted) ? (
                             <div className="h-8 w-24 rounded bg-muted/30 animate-pulse" />
                         ) : (
                             <p className="text-2xl font-bold">{card.format(stats[card.key])}</p>

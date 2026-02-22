@@ -1,4 +1,4 @@
-'use client';
+import { useState, useEffect } from 'react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Skull, AlertTriangle, ArrowRight, CheckCircle2 } from 'lucide-react';
@@ -11,9 +11,12 @@ interface KillListCardProps {
 }
 
 export function KillListCard({ insights, isLoading }: KillListCardProps) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
     const killSuggestions = insights.filter(i => i.type === 'kill');
 
-    if (isLoading) {
+    if (isLoading || !mounted) {
         return (
             <Card className="glass border-border/40 animate-pulse bg-muted/20 h-[300px]" />
         );

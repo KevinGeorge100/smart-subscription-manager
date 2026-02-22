@@ -10,7 +10,10 @@ interface UpcomingRenewalsProps {
 }
 
 export function UpcomingRenewals({ subscriptions, isLoading }: UpcomingRenewalsProps) {
-    if (isLoading) {
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
+
+    if (isLoading || !mounted) {
         return (
             <Card className="glass border-border/40">
                 <CardHeader className="pb-3">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     Card,
     CardContent,
@@ -61,11 +61,13 @@ export function SubscriptionTable({
     isCompact = false,
 }: SubscriptionTableProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [mounted, setMounted] = useState(false);
+    useEffect(() => setMounted(true), []);
 
     const isUnverifiedAI = (sub: Subscription) =>
         sub.source === 'ai-detected' && !sub.verified;
 
-    if (isLoading) {
+    if (isLoading || !mounted) {
         return (
             <Card className="glass border-border/40">
                 <CardContent className="p-6">
