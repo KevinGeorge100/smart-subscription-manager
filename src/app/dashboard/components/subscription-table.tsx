@@ -17,6 +17,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import Link from 'next/link';
 import {
     AlertDialog,
     AlertDialogAction,
@@ -29,7 +30,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { BrainCircuit, Edit3, Search, Trash2, User } from 'lucide-react';
+import { BrainCircuit, CheckCircle2, Edit3, Search, Trash2, User } from 'lucide-react';
 import type { Subscription } from '@/types';
 import { CATEGORIES } from '@/types';
 import { format } from 'date-fns';
@@ -43,6 +44,8 @@ interface SubscriptionTableProps {
     onCategoryChange: (v: string) => void;
     onEdit: (sub: Subscription) => void;
     onDelete: (id: string) => void;
+    onVerify: (id: string) => void;
+    isCompact?: boolean;
 }
 
 export function SubscriptionTable({
@@ -54,8 +57,13 @@ export function SubscriptionTable({
     onCategoryChange,
     onEdit,
     onDelete,
+    onVerify,
+    isCompact = false,
 }: SubscriptionTableProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
+
+    const isUnverifiedAI = (sub: Subscription) =>
+        sub.source === 'ai-detected' && !sub.verified;
 
     if (isLoading) {
         return (
@@ -88,28 +96,38 @@ export function SubscriptionTable({
                         </CardDescription>
                     </div>
                     <div className="flex gap-2">
-                        <div className="relative flex-1 sm:w-48">
-                            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                            <Input
-                                placeholder="Search..."
-                                className="pl-8 bg-muted/30"
-                                value={searchTerm}
-                                onChange={(e) => onSearchChange(e.target.value)}
-                            />
-                        </div>
-                        <Select value={filterCategory} onValueChange={onCategoryChange}>
-                            <SelectTrigger className="w-[140px] bg-muted/30">
-                                <SelectValue placeholder="Category" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="All">All Categories</SelectItem>
-                                {CATEGORIES.map((cat) => (
-                                    <SelectItem key={cat} value={cat}>
-                                        {cat}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {isCompact ? (
+                            <Button variant="ghost" size="sm" asChild>
+                                <Link href="/dashboard/subscriptions" className="text-xs">
+                                    View All
+                                </Link>
+                            </Button>
+                        ) : (
+                            <>
+                                <div className="relative flex-1 sm:w-48">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search..."
+                                        className="pl-8 bg-muted/30"
+                                        value={searchTerm}
+                                        onChange={(e) => onSearchChange(e.target.value)}
+                                    />
+                                </div>
+                                <Select value={filterCategory} onValueChange={onCategoryChange}>
+                                    <SelectTrigger className="w-[140px] bg-muted/30">
+                                        <SelectValue placeholder="Category" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="All">All Categories</SelectItem>
+                                        {CATEGORIES.map((cat) => (
+                                            <SelectItem key={cat} value={cat}>
+                                                {cat}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </>
+                        )}
                     </div>
                 </div>
             </CardHeader>
@@ -132,21 +150,29 @@ export function SubscriptionTable({
                             >
                                 {/* Name & Category */}
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center gap-2 flex-wrap">
                                         <p className="font-medium text-sm truncate">{sub.name}</p>
-                                        <Badge
-                                            variant={
-                                                sub.source === 'ai-detected' ? 'default' : 'secondary'
-                                            }
-                                            className="text-[10px] px-1.5 py-0"
-                                        >
-                                            {sub.source === 'ai-detected' ? (
+                                        {/* Verification / source badge */}
+                                        {isUnverifiedAI(sub) ? (
+                                            <Badge
+                                                className="text-[10px] px-1.5 py-0 bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/20"
+                                            >
                                                 <BrainCircuit className="h-3 w-3 mr-1" />
-                                            ) : (
+                                                ✨ AI Detected
+                                            </Badge>
+                                        ) : sub.source === 'ai-detected' && sub.verified ? (
+                                            <Badge
+                                                className="text-[10px] px-1.5 py-0 bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"
+                                            >
+                                                <CheckCircle2 className="h-3 w-3 mr-1" />
+                                                Verified
+                                            </Badge>
+                                        ) : (
+                                            <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
                                                 <User className="h-3 w-3 mr-1" />
-                                            )}
-                                            {sub.source === 'ai-detected' ? 'AI' : 'Manual'}
-                                        </Badge>
+                                                Manual
+                                            </Badge>
+                                        )}
                                     </div>
                                     <p className="text-xs text-muted-foreground mt-0.5">
                                         {sub.category} · Renews{' '}
@@ -168,6 +194,18 @@ export function SubscriptionTable({
 
                                 {/* Actions */}
                                 <div className="flex items-center gap-1 shrink-0">
+                                    {/* Verify button — only for unverified AI subs */}
+                                    {isUnverifiedAI(sub) && (
+                                        <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8 text-muted-foreground hover:text-emerald-400"
+                                            onClick={() => onVerify(sub.id)}
+                                            title="Mark as verified"
+                                        >
+                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                        </Button>
+                                    )}
                                     <Button
                                         variant="ghost"
                                         size="icon"
