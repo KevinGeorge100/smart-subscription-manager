@@ -36,6 +36,18 @@ export default function DashboardPage() {
     const { insights, isLoading: isAIAnalysisLoading } = useAIInsights(subscriptions);
     const { toast } = useToast();
 
+    // Gmail connection
+    const [gmailAccounts, setGmailAccounts] = useState<ConnectedEmail[]>([]);
+    const fetchGmailStatus = useCallback(async () => {
+        if (!user?.uid) return;
+        const { accounts } = await getGmailConnectionStatus(user.uid);
+        setGmailAccounts(accounts);
+    }, [user?.uid]);
+
+    useEffect(() => {
+        fetchGmailStatus();
+    }, [fetchGmailStatus]);
+
     // Auto-sync logic
     useEffect(() => {
         if (gmailAccounts.length === 0 || !user?.uid) return;
@@ -71,18 +83,6 @@ export default function DashboardPage() {
     // Modal state
     const [modalOpen, setModalOpen] = useState(false);
     const [editingSubscription, setEditingSubscription] = useState<Subscription | null>(null);
-
-    // Gmail connection
-    const [gmailAccounts, setGmailAccounts] = useState<ConnectedEmail[]>([]);
-    const fetchGmailStatus = useCallback(async () => {
-        if (!user?.uid) return;
-        const { accounts } = await getGmailConnectionStatus(user.uid);
-        setGmailAccounts(accounts);
-    }, [user?.uid]);
-
-    useEffect(() => {
-        fetchGmailStatus();
-    }, [fetchGmailStatus]);
 
     // Filter state (for preview table)
     const [searchTerm, setSearchTerm] = useState('');

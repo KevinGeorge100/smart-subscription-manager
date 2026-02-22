@@ -3,6 +3,7 @@
 import { MarketingLayout } from '@/components/marketing/layout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { BrainCircuit, Mail, Shield, Zap } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 const sections = [
     {
