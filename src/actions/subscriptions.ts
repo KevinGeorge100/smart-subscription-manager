@@ -36,6 +36,10 @@ export async function addSubscription(
             id: ref.id,
             userId,
             source,
+            // New integrity fields:
+            verified: source === 'manual',      // manual = pre-verified; ai-detected = needs review
+            originalCurrency: 'INR',             // default; AI parser may override via direct Firestore writes
+            amountInBaseCurrency: data.amount,   // INR by default; toINR() applied at parse time for foreign currency
             renewalDate: data.renewalDate,
             createdAt: new Date(),
             updatedAt: new Date(),

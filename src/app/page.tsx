@@ -79,7 +79,7 @@ function KineticSphere() {
       <div className="absolute inset-20 md:inset-24 rounded-full bg-gradient-to-br from-blue-600/30 via-purple-600/20 to-cyan-600/30 backdrop-blur-xl border border-white/10 shadow-[0_0_80px_hsl(217_91%_60%/0.15)]">
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-3xl md:text-4xl font-bold gradient-text-bright">₹0</p>
+            <p className="text-3xl md:text-4xl font-bold gradient-text-bright">&#8377;0</p>
             <p className="text-[10px] md:text-xs text-muted-foreground mt-1 tracking-widest uppercase">wasted</p>
           </div>
         </div>
@@ -87,7 +87,7 @@ function KineticSphere() {
 
       {/* Floating data points */}
       <div className="absolute top-[15%] right-[5%] glass rounded-lg px-3 py-1.5 text-xs animate-pulse-glow">
-        <span className="text-emerald-400 font-semibold">−₹899</span>
+        <span className="text-emerald-400 font-semibold">&#8722;&#8377;899</span>
         <span className="text-muted-foreground ml-1">saved</span>
       </div>
       <div className="absolute bottom-[18%] left-[2%] glass rounded-lg px-3 py-1.5 text-xs animate-pulse-glow" style={{ animationDelay: '1s' }}>
@@ -159,19 +159,19 @@ function ProblemSection() {
             </div>
             <div className="mt-4 space-y-4">
               {[
-                { text: 'Forgot about ₹599/mo music app', icon: '😰' },
+                { text: 'Forgot about &#8377;599/mo music app', icon: '😰' },
                 { text: 'Duplicate cloud storage paying twice', icon: '💸' },
-                { text: 'Free trial converted — ₹1,499/yr charged', icon: '⏰' },
-                { text: '₹12,000+ wasted annually on ghost subs', icon: '👻' },
+                { text: 'Free trial converted — &#8377;1,499/yr charged', icon: '⏰' },
+                { text: '&#8377;12,000+ wasted annually on ghost subs', icon: '👻' },
               ].map((item) => (
                 <div key={item.text} className="flex items-start gap-3 text-sm text-muted-foreground">
                   <span className="text-lg shrink-0">{item.icon}</span>
-                  <span>{item.text}</span>
+                  <span dangerouslySetInnerHTML={{ __html: item.text }} />
                 </div>
               ))}
             </div>
             <div className="mt-6 text-center">
-              <p className="text-3xl font-bold text-red-400">−₹12,000</p>
+              <p className="text-3xl font-bold text-red-400">&#8722;&#8377;12,000</p>
               <p className="text-xs text-muted-foreground mt-1">wasted per year</p>
             </div>
           </motion.div>
@@ -195,7 +195,7 @@ function ProblemSection() {
               ))}
             </div>
             <div className="mt-6 text-center">
-              <p className="text-3xl font-bold text-emerald-400">+₹30,000</p>
+              <p className="text-3xl font-bold text-emerald-400">+&#8377;30,000</p>
               <p className="text-xs text-muted-foreground mt-1">saved per year</p>
             </div>
           </motion.div>
@@ -301,7 +301,7 @@ function StatsSection() {
 
   const stats = [
     { value: '50,000+', label: 'Subscriptions Tracked' },
-    { value: '₹4.2 Cr', label: 'Saved for Users' },
+    { value: '&#8377;4.2 Cr', label: 'Saved for Users' },
     { value: '99.2%', label: 'AI Detection Rate' },
     { value: '<60s', label: 'Setup Time' },
   ];
@@ -318,7 +318,7 @@ function StatsSection() {
               transition={{ duration: 0.5, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] as const }}
               className="text-center"
             >
-              <p className="text-3xl md:text-4xl font-bold gradient-text-bright">{s.value}</p>
+              <p className="text-3xl md:text-4xl font-bold gradient-text-bright" dangerouslySetInnerHTML={{ __html: s.value }} />
               <p className="text-xs text-muted-foreground mt-2 uppercase tracking-wider">{s.label}</p>
             </motion.div>
           ))}
@@ -366,7 +366,7 @@ function FinalCTA() {
           </Link>
         </motion.div>
         <motion.p variants={fadeIn} className="mt-6 text-xs text-muted-foreground">
-          Free forever for up to 20 subscriptions · No credit card required
+          Free forever for up to 20 subscriptions &middot; No credit card required
         </motion.p>
       </div>
     </Section>
@@ -377,6 +377,8 @@ function FinalCTA() {
 // Main Page
 // ──────────────────────────────────────
 
+import { MarketingLayout } from '@/components/marketing/layout';
+
 export default function LandingPage() {
   const heroRef = useRef(null);
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ['start start', 'end start'] });
@@ -384,46 +386,10 @@ export default function LandingPage() {
   const heroY = useTransform(scrollYProgress, [0, 1], [0, 100]);
 
   return (
-    <div className="flex min-h-screen flex-col">
-      {/* ─── Sticky Frosted Nav ─── */}
-      <header className="sticky top-0 z-50 w-full border-b border-white/[0.06] bg-background/60 backdrop-blur-2xl">
-        <div className="container flex h-16 max-w-screen-2xl items-center">
-          <Link href="/" className="flex items-center gap-2.5">
-            <SubZeroLogo className="h-8 w-8" />
-            <span className="text-lg font-bold tracking-tight">SubZero</span>
-          </Link>
-
-          <nav className="hidden md:flex items-center gap-6 ml-10">
-            {['Features', 'Pricing', 'Docs'].map((item) => (
-              <Link
-                key={item}
-                href={item === 'Features' ? '#features' : '#'}
-                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
-              >
-                {item}
-              </Link>
-            ))}
-          </nav>
-
-          <div className="flex flex-1 items-center justify-end gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground">
-                Login
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm" className="rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 border-0">
-                Get Started
-                <ArrowRight className="ml-1.5 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-        </div>
-      </header>
-
+    <MarketingLayout>
       <main className="flex-1">
         {/* ─── HERO ─── */}
-        <section ref={heroRef} className="relative overflow-hidden pt-16 pb-8 md:pt-24 md:pb-16 lg:pt-32">
+        <section id="hero" ref={heroRef} className="relative overflow-hidden pt-16 pb-8 md:pt-24 md:pb-16 lg:pt-32">
           {/* Multi-layer background */}
           <div className="absolute inset-0 -z-10">
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,hsl(217_91%_60%/0.08),transparent_70%)]" />
@@ -474,7 +440,7 @@ export default function LandingPage() {
                 </motion.div>
 
                 <motion.p variants={fadeIn} className="mt-4 text-xs text-muted-foreground">
-                  Free forever · No credit card · Setup in 60 seconds
+                  Free forever &middot; No credit card &middot; Setup in 60 seconds
                 </motion.p>
               </motion.div>
 
@@ -501,29 +467,13 @@ export default function LandingPage() {
         <StatsSection />
 
         {/* ─── BENTO FEATURES ─── */}
-        <BentoGrid />
+        <div id="features">
+          <BentoGrid />
+        </div>
 
         {/* ─── FINAL CTA ─── */}
         <FinalCTA />
       </main>
-
-      {/* ─── FOOTER ─── */}
-      <footer className="border-t border-border/30 py-10">
-        <div className="container max-w-6xl flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-2.5">
-            <SubZeroLogo className="h-7 w-7" />
-            <span className="text-sm font-bold">SubZero</span>
-          </div>
-          <div className="flex items-center gap-6 text-sm text-muted-foreground">
-            <Link href="#" className="hover:text-foreground transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Terms</Link>
-            <Link href="#" className="hover:text-foreground transition-colors">Contact</Link>
-          </div>
-          <p className="text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} SubZero. Made in India 🇮🇳
-          </p>
-        </div>
-      </footer>
-    </div>
+    </MarketingLayout>
   );
 }

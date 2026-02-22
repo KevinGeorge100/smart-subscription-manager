@@ -20,9 +20,9 @@ import { SubZeroLogo } from '@/components/ui/logo';
 
 const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
-    { label: 'Subscriptions', href: '/dashboard', icon: CreditCard },
-    { label: 'Analytics', href: '/dashboard', icon: BarChart3 },
-    { label: 'Settings', href: '/dashboard', icon: Settings },
+    { label: 'Subscriptions', href: '/dashboard/subscriptions', icon: CreditCard },
+    { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
+    { label: 'Settings', href: '/dashboard/settings', icon: Settings },
 ];
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
@@ -60,10 +60,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             {/* ─── Sidebar (Desktop) ─── */}
             <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 border-r border-sidebar-border bg-sidebar">
                 {/* Logo */}
-                <div className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border">
+                <Link href="/" className="flex h-16 items-center gap-2 px-6 border-b border-sidebar-border hover:opacity-80 transition-opacity">
                     <SubZeroLogo className="h-8 w-8" />
                     <span className="text-lg font-bold tracking-tight">SubZero</span>
-                </div>
+                </Link>
 
                 {/* Navigation */}
                 <nav className="flex-1 space-y-1 px-3 py-4">
@@ -91,10 +91,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="border-t border-sidebar-border p-4">
                     <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                            {user.email?.[0]?.toUpperCase() ?? 'U'}
+                            {(user.displayName ?? user.uid)?.[0]?.toUpperCase() ?? 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{user.email}</p>
+                            <p className="text-sm font-medium truncate">{user.displayName ?? user.uid}</p>
                         </div>
                         <Button
                             variant="ghost"
@@ -117,10 +117,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     />
                     <aside className="absolute left-0 top-0 h-full w-64 bg-sidebar border-r border-sidebar-border">
                         <div className="flex h-16 items-center justify-between px-6 border-b border-sidebar-border">
-                            <div className="flex items-center gap-2">
+                            <Link href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" onClick={() => setSidebarOpen(false)}>
                                 <SubZeroLogo className="h-8 w-8" />
                                 <span className="text-lg font-bold">SubZero</span>
-                            </div>
+                            </Link>
                             <Button
                                 variant="ghost"
                                 size="icon"
@@ -162,7 +162,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     <div className="flex-1" />
                     <div className="flex items-center gap-3">
                         <span className="hidden sm:inline text-sm text-muted-foreground">
-                            {user.email}
+                            {user.displayName ?? user.uid}
                         </span>
                         <Button
                             onClick={handleSignOut}
