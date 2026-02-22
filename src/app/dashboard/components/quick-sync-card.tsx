@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { SyncButton } from '@/components/dashboard/SyncButton';
 import { Mail, ExternalLink, ShieldCheck, X, PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { useTransition } from 'react';
+import { useTransition, useState, useEffect } from 'react';
 import { disconnectGmail } from '@/actions/gmail';
 import type { ConnectedEmail } from '@/actions/gmail';
 import { formatDistanceToNow } from 'date-fns';
