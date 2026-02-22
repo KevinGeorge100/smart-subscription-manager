@@ -156,7 +156,7 @@ export async function GET(request: Request) {
                     createdAt: now,
                     metadata: {
                         subscriptionId: userSubscriptions.length === 1 ? userSubscriptions[0].id : undefined,
-                        amount: userSubscriptions.reduce((sum, sub) => sum + sub.amount, 0),
+                        amount: userSubscriptions.reduce((sum: number, sub) => sum + sub.amount, 0),
                     }
                 });
             }
