@@ -84,21 +84,31 @@ export function useCollection<T = any>(
         setError(null);
         setIsLoading(false);
       },
-      (error: FirestoreError) => {
-        // This logic extracts the path from either a ref or a query
-        const path: string =
-          memoizedTargetRefOrQuery.type === 'collection'
-            ? (memoizedTargetRefOrQuery as CollectionReference).path
-            : (memoizedTargetRefOrQuery as unknown as InternalQuery)._query.path.canonicalString()
+      (err: FirestoreError) => {
+        // This logic extracts the path from either a ref or a query safely
+        let path = 'unknown/path';
+        try {
+          if ((memoizedTargetRefOrQuery as any).type === 'collection') {
+            path = (memoizedTargetRefOrQuery as CollectionReference).path;
+          } else if ((memoizedTargetRefOrQuery as any)._query?.path?.canonicalString) {
+            path = (memoizedTargetRefOrQuery as any)._query.path.canonicalString();
+          } else if ((memoizedTargetRefOrQuery as any).path) {
+              path = (memoizedTargetRefOrQuery as any).path;
+          }
+        } catch (e) {
+          console.warn('Could not extract Firebase query path securely', e);
+        }
+
+        console.error('Firestore useCollection Error:', err.code, err.message, err);
 
         const contextualError = new FirestorePermissionError({
           operation: 'list',
           path,
-        })
+        });
 
-        setError(contextualError)
-        setData(null)
-        setIsLoading(false)
+        setError(contextualError);
+        setData(null);
+        setIsLoading(false);
 
         // trigger global error propagation
         errorEmitter.emit('permission-error', contextualError);
