@@ -1,0 +1,41 @@
+﻿   Γû▓ Next.js 15.5.9
+   - Environments: .env.local
+
+   Creating an optimized production build ...
+node.exe : Failed 
+to compile.
+At line:1 char:1
++ & "C:\Program File
+s\nodejs/node.exe" 
+"C:\Program Files\no
+dejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~
+    + CategoryInfo  
+            : NotS  
+  pecified: (Fail   
+ ed to compile.:    
+String) [], Rem    
+oteException
+    + FullyQualifie 
+   dErrorId : Nati  
+  veCommandError
+ 
+
+./src/app/dashboard/
+layout.tsx
+Module not found: 
+Can't resolve '@/com
+ponents/dashboard/ai
+-chat'
+
+https://nextjs.org/d
+ocs/messages/module-
+not-found
+
+
+> Build failed 
+because of webpack 
+errors
