@@ -21,6 +21,7 @@ import { SubZeroLogo } from '@/components/ui/logo';
 import { NotificationCenter } from './components/notification-center';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { AIChat } from '@/components/dashboard/ai-chat';
+import { ErrorBoundary } from '@/components/error-boundary';
 
 
 const navItems = [
@@ -205,11 +206,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Page Content */}
-                <main className="p-4 md:p-6 lg:p-8">{children}</main>
+                <main className="p-4 md:p-6 lg:p-8">
+                    <ErrorBoundary label="dashboard">
+                        {children}
+                    </ErrorBoundary>
+                </main>
             </div>
 
             {/* ─── Floating AI Chat Bubble ─── */}
-            <AIChat />
+            <ErrorBoundary>
+                <AIChat />
+            </ErrorBoundary>
         </div>
     );
 }

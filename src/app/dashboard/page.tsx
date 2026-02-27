@@ -108,7 +108,7 @@ export default function DashboardPage() {
         if (filterCategory !== 'All') {
             subs = subs.filter((s) => s.category === filterCategory);
         }
-        subs.sort((a, b) => a.renewalDate.getTime() - b.renewalDate.getTime());
+        subs.sort((a, b) => (a.renewalDate?.getTime?.() ?? 0) - (b.renewalDate?.getTime?.() ?? 0));
         // Show only upcoming 5 on the overview
         return subs.slice(0, 5);
     }, [subscriptions, searchTerm, filterCategory]);
