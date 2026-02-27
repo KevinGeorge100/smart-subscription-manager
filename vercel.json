@@ -1,10 +1,12 @@
-﻿{
+{
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "buildCommand": "npx next build",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "installCommand": "npm install",
-  "regions": ["iad1"],
+  "regions": [
+    "iad1"
+  ],
   "functions": {
     "src/app/api/**/*.ts": {
       "maxDuration": 30
@@ -37,6 +39,10 @@
     {
       "path": "/api/cron/send-reminders?secret=${CRON_SECRET}",
       "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/sync",
+      "schedule": "0 3 * * *"
     }
   ]
 }

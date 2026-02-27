@@ -7,3 +7,4 @@
 
 export { analyzeSpending } from './flows/analyze-spending';
 export { detectSubscriptions } from './flows/detect-subscriptions';
+export { askSubZero } from './flows/chat';

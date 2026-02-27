@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
+import { doc, getDoc } from 'firebase/firestore';
 import {
     BarChart3,
     CreditCard,
@@ -19,6 +20,8 @@ import { cn } from '@/lib/utils';
 import { SubZeroLogo } from '@/components/ui/logo';
 import { NotificationCenter } from './components/notification-center';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { AIChat } from '@/components/dashboard/ai-chat';
+
 
 const navItems = [
     { label: 'Overview', href: '/dashboard', icon: LayoutDashboard },
@@ -33,6 +36,27 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
+    const [userName, setUserName] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (user && auth && !userName) {
+            if (user.displayName) {
+                setUserName(user.displayName);
+                return;
+            }
+            // Fallback to fetch from Firestore if displayName isn't set
+            import('firebase/firestore').then(({ getFirestore, doc, getDoc }) => {
+                const db = getFirestore(auth.app);
+                getDoc(doc(db, 'users', user.uid)).then((docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
+                        if (fullName) setUserName(fullName);
+                    }
+                }).catch(console.error);
+            });
+        }
+    }, [user, auth, userName]);
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -93,10 +117,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 <div className="border-t border-sidebar-border p-4">
                     <div className="flex items-center gap-3">
                         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                            {(user.displayName ?? user.uid)?.[0]?.toUpperCase() ?? 'U'}
+                            {(userName ?? user.displayName ?? user.uid)?.[0]?.toUpperCase() ?? 'U'}
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{user.displayName ?? user.uid}</p>
+                            <p className="text-sm font-medium truncate">{userName ?? user.displayName ?? user.uid}</p>
                         </div>
                         <Button
                             variant="ghost"
@@ -166,7 +190,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <ThemeToggle />
                         <NotificationCenter />
                         <span className="hidden sm:inline text-sm text-muted-foreground">
-                            {user.displayName ?? user.uid}
+                            {userName ?? user.displayName ?? user.uid}
                         </span>
                         <Button
                             onClick={handleSignOut}
@@ -183,6 +207,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 {/* Page Content */}
                 <main className="p-4 md:p-6 lg:p-8">{children}</main>
             </div>
+
+            {/* ─── Floating AI Chat Bubble ─── */}
+            <AIChat />
         </div>
     );
 }

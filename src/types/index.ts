@@ -16,6 +16,12 @@ export interface User {
       dashboard: boolean;
     };
   };
+  /** True if user has ≥1 connected Gmail account and last cron sync succeeded. */
+  isGmailSynced?: boolean;
+  /** Result of the last autonomous cron sync run. */
+  lastAutoSyncStatus?: 'success' | 'failed';
+  /** ISO timestamp of the next scheduled cron sync (informational). */
+  nextScheduledSync?: string;
 }
 
 // ──────────────────────────────────────────────

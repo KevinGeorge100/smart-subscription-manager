@@ -110,13 +110,18 @@ function extractPlainText(
 // ── Main Export ───────────────────────────────────────────────────────────────
 
 /**
- * Fetches the last 10 Gmail messages matching `label:INVOICE OR label:RECEIPT`
- * from each connected Gmail account, runs them through the Genkit `extractSub`
- * parser, and saves detected subscriptions to Firestore.
+ * Fetches Gmail messages matching `label:INVOICE OR label:RECEIPT` from each
+ * connected Gmail account, runs them through the Genkit `extractSub` parser,
+ * and saves detected subscriptions to Firestore.
  *
- * @param userId  The Firebase Auth UID of the user initiating the sync.
+ * @param userId          The Firebase Auth UID of the user initiating the sync.
+ * @param afterTimestamp  When provided, only emails *after* this date are fetched
+ *                        (incremental sync). Omit for a full historical scan.
  */
-export async function syncGmail(userId: string): Promise<SyncGmailResult> {
+export async function syncGmail(
+    userId: string,
+    afterTimestamp?: Date
+): Promise<SyncGmailResult> {
     if (!userId) {
         return { success: false, added: 0, scanned: 0, accountsScanned: 0, error: 'No userId provided.' };
     }
@@ -142,6 +147,12 @@ export async function syncGmail(userId: string): Promise<SyncGmailResult> {
     let totalScanned = 0;
     let totalAdded = 0;
 
+    // Build Gmail search query — append `after:<epochSeconds>` for incremental syncs
+    const baseQuery = 'label:INVOICE OR label:RECEIPT';
+    const gmailQuery = afterTimestamp
+        ? `${baseQuery} after:${Math.floor(afterTimestamp.getTime() / 1000)}`
+        : baseQuery;
+
     await Promise.allSettled(
         emailsSnap.docs.map(async (accountDoc) => {
             const { email, encryptedTokens } = accountDoc.data() as {
@@ -156,7 +167,7 @@ export async function syncGmail(userId: string): Promise<SyncGmailResult> {
                 // ── Fetch up to 10 invoice / receipt emails ────────────────
                 const listRes = await gmail.users.messages.list({
                     userId: 'me',
-                    q: 'label:INVOICE OR label:RECEIPT',
+                    q: gmailQuery,
                     maxResults: 10,
                 });
 

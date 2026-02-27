@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { ShieldCheck } from 'lucide-react';
+import { SubZeroLogo } from '@/components/ui/logo';
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -26,10 +26,10 @@ import { useToast } from '@/hooks/use-toast';
 
 
 const formSchema = z.object({
-    firstName: z.string().min(1, { message: "First name is required." }),
-    lastName: z.string().min(1, { message: "Last name is required." }),
-    email: z.string().email({ message: "Invalid email address." }),
-    password: z.string().min(6, { message: "Password must be at least 6 characters." }),
+  firstName: z.string().min(1, { message: "First name is required." }),
+  lastName: z.string().min(1, { message: "Last name is required." }),
+  email: z.string().email({ message: "Invalid email address." }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters." }),
 });
 
 
@@ -40,7 +40,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const pendingData = useRef<{firstName: string, lastName: string} | null>(null);
+  const pendingData = useRef<{ firstName: string, lastName: string } | null>(null);
   const userCreationTriggered = useRef(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -55,12 +55,12 @@ export default function RegisterPage() {
 
   function onSubmit(values: z.infer<typeof formSchema>) {
     if (!auth) {
-        toast({
-            variant: "destructive",
-            title: "Uh oh! Something went wrong.",
-            description: "Authentication service is not available. Please try again later.",
-        });
-        return;
+      toast({
+        variant: "destructive",
+        title: "Uh oh! Something went wrong.",
+        description: "Authentication service is not available. Please try again later.",
+      });
+      return;
     };
     pendingData.current = { firstName: values.firstName, lastName: values.lastName };
     userCreationTriggered.current = true;
@@ -77,10 +77,10 @@ export default function RegisterPage() {
         email: user.email,
       };
       setDocumentNonBlocking(userRef, userData, { merge: true });
-      
+
       pendingData.current = null;
       userCreationTriggered.current = false;
-      
+
       router.push('/dashboard');
     }
   }, [user, firestore, router]);
@@ -93,10 +93,10 @@ export default function RegisterPage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted p-4">
-        <div className="mb-8 flex items-center space-x-2">
-            <ShieldCheck className="h-8 w-8" />
-            <span className="text-2xl font-bold">Subscription Book</span>
-        </div>
+      <div className="mb-8 flex items-center space-x-2">
+        <SubZeroLogo className="h-8 w-8" />
+        <span className="text-2xl font-bold tracking-tight">SubZero</span>
+      </div>
       <Card className="mx-auto w-full max-w-sm">
         <CardHeader>
           <CardTitle className="text-xl">Sign Up</CardTitle>
