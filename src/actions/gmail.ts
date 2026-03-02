@@ -44,10 +44,11 @@ async function buildGmailClientFromDoc(
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
+    // redirectUri is not needed for token refresh — use env var or a safe fallback
+    const redirectUri = process.env.GOOGLE_REDIRECT_URI ?? 'https://smart-subscription-manager.vercel.app/api/gmail/callback';
 
-    if (!clientId || !clientSecret || !redirectUri) {
-        throw new Error('Missing Google OAuth environment variables on the server.');
+    if (!clientId || !clientSecret) {
+        throw new Error('Missing Google OAuth environment variables on the server (GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET).');
     }
 
     const oauth2Client = new google.auth.OAuth2(clientId, clientSecret, redirectUri);

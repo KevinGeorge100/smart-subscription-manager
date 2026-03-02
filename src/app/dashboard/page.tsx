@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { getGmailConnectionStatus, syncSubscriptions } from '@/actions/gmail';
 import type { ConnectedEmail } from '@/actions/gmail';
@@ -35,6 +36,38 @@ export default function DashboardPage() {
     const { burnData, currentMonthLabel, annualSavings } = useAnalytics(subscriptions);
     const { insights, isLoading: isAIAnalysisLoading } = useAIInsights(subscriptions);
     const { toast } = useToast();
+    const searchParams = useSearchParams();
+    const router = useRouter();
+
+    // Show toast feedback after Gmail OAuth redirect
+    useEffect(() => {
+        const sync = searchParams.get('sync');
+        if (!sync) return;
+
+        if (sync === 'connected') {
+            toast({
+                title: '✅ Gmail Connected!',
+                description: 'Your Gmail account is now linked. Click "Sync" to scan for subscriptions.',
+            });
+            fetchGmailStatus(); // Refresh the account list immediately
+        } else if (sync === 'denied') {
+            toast({
+                variant: 'destructive',
+                title: 'Gmail Access Denied',
+                description: 'You declined access. You can try connecting again anytime.',
+            });
+        } else if (sync === 'error') {
+            toast({
+                variant: 'destructive',
+                title: 'Gmail Connection Failed',
+                description: 'Something went wrong. Please try connecting again.',
+            });
+        }
+
+        // Clean up the URL so the toast only shows once
+        router.replace('/dashboard', { scroll: false });
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
 
     // Hydration guard
     const [mounted, setMounted] = useState(false);
