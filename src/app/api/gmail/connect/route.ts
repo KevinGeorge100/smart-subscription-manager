@@ -15,7 +15,7 @@ import { google } from 'googleapis';
  * Resolves the OAuth2 redirect URI.
  * Priority:
  *   1. GOOGLE_REDIRECT_URI env var (if explicitly set to a non-localhost value in prod)
- *   2. Derived from the incoming request's origin  (works on Vercel, localhost, any domain)
+ *   2. Derived from the incoming request's origin (works on Vercel, localhost, any domain)
  */
 function getRedirectUri(request: NextRequest): string {
     const envUri = process.env.GOOGLE_REDIRECT_URI;
@@ -24,9 +24,10 @@ function getRedirectUri(request: NextRequest): string {
     if (envUri && !envUri.includes('localhost')) {
         return envUri;
     }
-    // Derive from the real request URL so it always matches the current host.
-    const { protocol, host } = new URL(request.url);
-    return `${protocol}//${host}/api/gmail/callback`;
+    // Derive from the real request host. Force HTTPS unless running locally.
+    const { host } = new URL(request.url);
+    const actualProtocol = host.includes('localhost') ? 'http:' : 'https:';
+    return `${actualProtocol}//${host}/api/gmail/callback`;
 }
 
 function getOAuth2Client(redirectUri: string) {

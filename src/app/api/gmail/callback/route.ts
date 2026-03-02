@@ -19,8 +19,9 @@ function getRedirectUri(request: NextRequest): string {
     if (envUri && !envUri.includes('localhost')) {
         return envUri;
     }
-    const { protocol, host } = new URL(request.url);
-    return `${protocol}//${host}/api/gmail/callback`;
+    const { host } = new URL(request.url);
+    const actualProtocol = host.includes('localhost') ? 'http:' : 'https:';
+    return `${actualProtocol}//${host}/api/gmail/callback`;
 }
 
 function getOAuth2Client(redirectUri: string) {
