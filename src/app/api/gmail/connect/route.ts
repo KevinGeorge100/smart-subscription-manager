@@ -62,6 +62,8 @@ export async function GET(request: NextRequest) {
             prompt: 'consent',         // Force re-consent to always get refresh_token
             scope: [
                 'https://www.googleapis.com/auth/gmail.readonly',
+                'https://www.googleapis.com/auth/userinfo.email',
+                'https://www.googleapis.com/auth/userinfo.profile',
             ],
             state: userId,             // Echoed back in callback — used to resolve Firestore user
         });
