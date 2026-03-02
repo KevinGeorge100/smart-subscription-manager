@@ -11,14 +11,31 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 
-function getOAuth2Client() {
+/**
+ * Resolves the OAuth2 redirect URI.
+ * Priority:
+ *   1. GOOGLE_REDIRECT_URI env var (if explicitly set to a non-localhost value in prod)
+ *   2. Derived from the incoming request's origin  (works on Vercel, localhost, any domain)
+ */
+function getRedirectUri(request: NextRequest): string {
+    const envUri = process.env.GOOGLE_REDIRECT_URI;
+    // Use the env var only when it is set AND doesn't point to localhost while
+    // we are actually running in production.
+    if (envUri && !envUri.includes('localhost')) {
+        return envUri;
+    }
+    // Derive from the real request URL so it always matches the current host.
+    const { protocol, host } = new URL(request.url);
+    return `${protocol}//${host}/api/gmail/callback`;
+}
+
+function getOAuth2Client(redirectUri: string) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
-    if (!clientId || !clientSecret || !redirectUri) {
+    if (!clientId || !clientSecret) {
         throw new Error(
-            'Missing Google OAuth env vars: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI'
+            'Missing Google OAuth env vars: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET'
         );
     }
 
@@ -34,7 +51,10 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const oauth2Client = getOAuth2Client();
+        const redirectUri = getRedirectUri(request);
+        const oauth2Client = getOAuth2Client(redirectUri);
+
+        console.log(`[/api/gmail/connect] Using redirect URI: ${redirectUri}`);
 
         const authUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',   // Ensures we get a refresh_token

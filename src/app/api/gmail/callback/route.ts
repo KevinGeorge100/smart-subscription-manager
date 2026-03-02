@@ -14,14 +14,22 @@ import { google } from 'googleapis';
 import { getFirestoreAdmin } from '@/lib/firebase-admin';
 import { encrypt } from '@/lib/encryption';
 
-function getOAuth2Client() {
+function getRedirectUri(request: NextRequest): string {
+    const envUri = process.env.GOOGLE_REDIRECT_URI;
+    if (envUri && !envUri.includes('localhost')) {
+        return envUri;
+    }
+    const { protocol, host } = new URL(request.url);
+    return `${protocol}//${host}/api/gmail/callback`;
+}
+
+function getOAuth2Client(redirectUri: string) {
     const clientId = process.env.GOOGLE_CLIENT_ID;
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
-    const redirectUri = process.env.GOOGLE_REDIRECT_URI;
 
-    if (!clientId || !clientSecret || !redirectUri) {
+    if (!clientId || !clientSecret) {
         throw new Error(
-            'Missing Google OAuth env vars: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI'
+            'Missing Google OAuth env vars: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET'
         );
     }
 
@@ -48,7 +56,10 @@ export async function GET(request: NextRequest) {
     }
 
     try {
-        const oauth2Client = getOAuth2Client();
+        const redirectUri = getRedirectUri(request);
+        const oauth2Client = getOAuth2Client(redirectUri);
+
+        console.log(`[/api/gmail/callback] Using redirect URI: ${redirectUri}`);
 
         // ── Exchange auth code for tokens ─────────────────────────────────────
         const { tokens } = await oauth2Client.getToken(code);
