@@ -277,10 +277,26 @@ export async function syncSubscriptions(
         // ── Run Genkit AI extraction across all emails ─────────────────────────
         const { data: detected, debug } = await detectSubscriptions(allEmailTexts);
 
-        // ── Save each detected subscription ────────────────────────────────────
+        // ── Save each detected subscription (with deduplication) ───────────────
+        // Fetch existing subscription names to avoid adding duplicates
+        const existingSnap = await db
+            .collection('users').doc(userId)
+            .collection('subscriptions')
+            .get();
+
+        const existingNames = new Set(
+            existingSnap.docs.map((d) =>
+                (d.data().name as string || '').toLowerCase().trim()
+            )
+        );
+
         let added = 0;
         await Promise.allSettled(
             detected.map(async (sub) => {
+                const normalizedName = (sub.name || '').toLowerCase().trim();
+                // Skip if a subscription with the same name already exists
+                if (existingNames.has(normalizedName)) return;
+
                 const result = await addSubscription(
                     userId,
                     {
@@ -293,7 +309,10 @@ export async function syncSubscriptions(
                     },
                     'ai-detected'
                 );
-                if (result.success) added++;
+                if (result.success) {
+                    added++;
+                    existingNames.add(normalizedName); // prevent dupes within this batch too
+                }
             })
         );
 

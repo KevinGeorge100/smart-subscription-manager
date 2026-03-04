@@ -2,9 +2,10 @@
 
 /**
  * SyncButton — triggers Gmail subscription sync across ALL connected accounts.
+ * Shows animated progress messages while scanning to reassure the user.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { syncSubscriptions } from '@/actions/gmail';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -19,6 +20,20 @@ interface SyncButtonProps {
     label?: string;
 }
 
+const QUICK_STEPS = [
+    'Reading emails...',
+    'Analysing with AI...',
+    'Saving results...',
+];
+
+const DEEP_STEPS = [
+    'Fetching inbox...',
+    'Reading emails...',
+    'Analysing with AI...',
+    'Detecting subscriptions...',
+    'Saving results...',
+];
+
 export function SyncButton({
     userId,
     accountCount,
@@ -28,7 +43,29 @@ export function SyncButton({
     label
 }: SyncButtonProps) {
     const [isPending, setIsPending] = useState(false);
+    const [stepIndex, setStepIndex] = useState(0);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
     const { toast } = useToast();
+
+    const steps = timeframe === '30d' ? QUICK_STEPS : DEEP_STEPS;
+
+    // Cycle through progress messages while pending
+    useEffect(() => {
+        if (isPending) {
+            setStepIndex(0);
+            intervalRef.current = setInterval(() => {
+                setStepIndex((prev) => Math.min(prev + 1, steps.length - 1));
+            }, timeframe === '30d' ? 2500 : 4000);
+        } else {
+            if (intervalRef.current) {
+                clearInterval(intervalRef.current);
+                intervalRef.current = null;
+            }
+        }
+        return () => {
+            if (intervalRef.current) clearInterval(intervalRef.current);
+        };
+    }, [isPending, timeframe, steps.length]);
 
     async function handleSync() {
         if (isPending) return;
@@ -56,7 +93,7 @@ export function SyncButton({
                     variant: 'destructive',
                 });
             }
-        } catch (error: any) {
+        } catch {
             toast({
                 title: 'Sync Failed',
                 description: 'The request timed out or was interrupted. Please try again.',
@@ -78,7 +115,7 @@ export function SyncButton({
             {isPending ? (
                 <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {timeframe === '30d' ? 'Scanning...' : 'Deep Scanning...'}
+                    <span className="transition-all duration-500">{steps[stepIndex]}</span>
                 </>
             ) : (
                 <>

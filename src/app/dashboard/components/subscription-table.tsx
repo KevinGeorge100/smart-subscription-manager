@@ -30,7 +30,13 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { BrainCircuit, CheckCircle2, Edit3, Search, Trash2, User, Mail } from 'lucide-react';
+import { BrainCircuit, CheckCircle2, Edit3, Search, Trash2, User, Mail, X } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import type { Subscription } from '@/types';
 import { CATEGORIES } from '@/types';
 import { format } from 'date-fns';
@@ -195,76 +201,102 @@ export function SubscriptionTable({
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex items-center gap-1 shrink-0">
-                                    {/* Verify button — only for unverified AI subs */}
-                                    {isUnverifiedAI(sub) && (
+                                <TooltipProvider delayDuration={300}>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {/* Verify button — only for unverified AI subs */}
+                                        {isUnverifiedAI(sub) && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted-foreground hover:text-emerald-400"
+                                                        onClick={() => onVerify(sub.id)}
+                                                    >
+                                                        <CheckCircle2 className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">Confirm subscription</TooltipContent>
+                                            </Tooltip>
+                                        )}
+                                        {/* Not a subscription — quick dismiss (no dialog) */}
+                                        {isUnverifiedAI(sub) && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-8 w-8 text-muted-foreground hover:text-rose-400"
+                                                        onClick={() => onDelete(sub.id)}
+                                                    >
+                                                        <X className="h-3.5 w-3.5" />
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">Not a subscription — dismiss</TooltipContent>
+                                            </Tooltip>
+                                        )}
+                                        {/* View original email in Gmail */}
+                                        {sub.source === 'ai-detected' && sub.sourceEmailId && (
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <a
+                                                        href={`https://mail.google.com/mail/u/0/#inbox/${sub.sourceEmailId}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-muted-foreground hover:text-blue-400"
+                                                            asChild={false}
+                                                        >
+                                                            <Mail className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    </a>
+                                                </TooltipTrigger>
+                                                <TooltipContent side="top">View original email in Gmail</TooltipContent>
+                                            </Tooltip>
+                                        )}
                                         <Button
                                             variant="ghost"
                                             size="icon"
-                                            className="h-8 w-8 text-muted-foreground hover:text-emerald-400"
-                                            onClick={() => onVerify(sub.id)}
-                                            title="Mark as verified"
+                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                            onClick={() => onEdit(sub)}
                                         >
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                            <Edit3 className="h-3.5 w-3.5" />
                                         </Button>
-                                    )}
-                                    {/* View original email in Gmail */}
-                                    {sub.source === 'ai-detected' && sub.sourceEmailId && (
-                                        <a
-                                            href={`https://mail.google.com/mail/u/0/#inbox/${sub.sourceEmailId}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            title="View original email in Gmail"
-                                        >
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-blue-400"
-                                                asChild={false}
-                                            >
-                                                <Mail className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </a>
-                                    )}
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8 text-muted-foreground hover:text-foreground"
-                                        onClick={() => onEdit(sub)}
-                                    >
-                                        <Edit3 className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                                onClick={() => setDeletingId(sub.id)}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Delete Subscription</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    Are you sure you want to delete &quot;{sub.name}&quot;?
-                                                    This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction
-                                                    onClick={() => onDelete(sub.id)}
-                                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                                                    onClick={() => setDeletingId(sub.id)}
                                                 >
-                                                    Delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </div>
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Subscription</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Are you sure you want to delete &quot;{sub.name}&quot;?
+                                                        This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction
+                                                        onClick={() => onDelete(sub.id)}
+                                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                                    >
+                                                        Delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                </TooltipProvider>
                             </div>
                         ))}
                     </div>
