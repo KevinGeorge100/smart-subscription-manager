@@ -121,8 +121,8 @@ function extractTextFromPayload(payload: any): string {
     // Fallback to HTML, strip basic tags to reduce token payload
     if (htmlText.trim()) {
         return htmlText
-            .replace(/<style[^>]*>.*?<\/style>/gis, '')
-            .replace(/<script[^>]*>.*?<\/script>/gis, '')
+            .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+            .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
             .replace(/<[^>]+>/g, ' ')  // Strip HTML tags
             .replace(/\s+/g, ' ')      // Normalize whitespace
             .replace(/&nbsp;/ig, ' ')  // Strip common HTML entities
