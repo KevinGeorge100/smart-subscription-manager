@@ -273,7 +273,7 @@ export async function syncSubscriptions(
         }
 
         // ── Run Genkit AI extraction across all emails ─────────────────────────
-        const detected = await detectSubscriptions(allEmailTexts);
+        const { data: detected, debug } = await detectSubscriptions(allEmailTexts);
 
         // ── Save each detected subscription ────────────────────────────────────
         let added = 0;
@@ -309,7 +309,7 @@ export async function syncSubscriptions(
             added,
             scanned: allEmailTexts.length,
             accountsScanned: snapshot.size,
-            debugLogs: JSON.stringify(detected),
+            debugLogs: debug,
         };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
