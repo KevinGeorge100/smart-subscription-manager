@@ -4,7 +4,7 @@
  * SyncButton — triggers Gmail subscription sync across ALL connected accounts.
  */
 
-import { useTransition } from 'react';
+import { useState } from 'react';
 import { syncSubscriptions } from '@/actions/gmail';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
@@ -27,11 +27,13 @@ export function SyncButton({
     variant = 'default',
     label
 }: SyncButtonProps) {
-    const [isPending, startTransition] = useTransition();
+    const [isPending, setIsPending] = useState(false);
     const { toast } = useToast();
 
-    function handleSync() {
-        startTransition(async () => {
+    async function handleSync() {
+        if (isPending) return;
+        setIsPending(true);
+        try {
             const result = await syncSubscriptions(userId, timeframe);
 
             if (result.success) {
@@ -54,7 +56,15 @@ export function SyncButton({
                     variant: 'destructive',
                 });
             }
-        });
+        } catch (error: any) {
+            toast({
+                title: 'Sync Failed',
+                description: 'The request timed out or was interrupted. Please try again.',
+                variant: 'destructive',
+            });
+        } finally {
+            setIsPending(false);
+        }
     }
 
     return (
