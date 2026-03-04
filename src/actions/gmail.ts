@@ -234,6 +234,7 @@ export async function syncSubscriptions(
     scanned?: number;
     accountsScanned?: number;
     error?: string;
+    debugLogs?: string;
 }> {
     try {
         const db = getFirestoreAdmin();
@@ -308,6 +309,7 @@ export async function syncSubscriptions(
             added,
             scanned: allEmailTexts.length,
             accountsScanned: snapshot.size,
+            debugLogs: JSON.stringify(detected),
         };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
