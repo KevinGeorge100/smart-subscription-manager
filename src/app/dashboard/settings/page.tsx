@@ -419,7 +419,7 @@ export default function SettingsPage() {
                                             <Key className="h-4 w-4" />
                                             Change Password
                                         </CardTitle>
-                                        <CardDescription>Update your password. You'll need your current password to confirm.</CardDescription>
+                                        <CardDescription>Update your password. You&apos;ll need your current password to confirm.</CardDescription>
                                     </CardHeader>
                                     <CardContent className="space-y-4">
                                         <div className="space-y-2">

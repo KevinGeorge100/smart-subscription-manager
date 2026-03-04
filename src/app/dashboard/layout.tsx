@@ -1,6 +1,7 @@
 'use client';
 
 import { useUser, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { doc } from 'firebase/firestore';
@@ -117,7 +118,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-primary/10 text-primary text-sm font-semibold overflow-hidden flex items-center justify-center shrink-0">
                             {photoURL
-                                ? <img src={photoURL} alt={displayName} className="h-full w-full object-cover" />
+                                ? <Image src={photoURL} alt={displayName} width={36} height={36} className="h-full w-full object-cover" unoptimized />
                                 : avatarInitial
                             }
                         </div>
