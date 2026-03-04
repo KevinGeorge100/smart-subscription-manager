@@ -290,31 +290,39 @@ export async function syncSubscriptions(
             )
         );
 
-        let added = 0;
-        await Promise.allSettled(
-            detected.map(async (sub) => {
-                const normalizedName = (sub.name || '').toLowerCase().trim();
-                // Skip if a subscription with the same name already exists
-                if (existingNames.has(normalizedName)) return;
-
-                const result = await addSubscription(
-                    userId,
-                    {
-                        name: sub.name,
-                        amount: sub.amount,
-                        billingCycle: sub.billingCycle,
-                        category: sub.category,
-                        renewalDate: sub.renewalDate,
-                        sourceEmailId: sub.sourceEmailId,
-                    },
-                    'ai-detected'
-                );
-                if (result.success) {
-                    added++;
-                    existingNames.add(normalizedName); // prevent dupes within this batch too
-                }
-            })
+        const existingEmailIds = new Set(
+            existingSnap.docs
+                .map((d) => d.data().sourceEmailId as string | undefined)
+                .filter(Boolean) as string[]
         );
+
+        let added = 0;
+        // Process sequentially so existingNames/existingEmailIds stay consistent
+        for (const sub of detected) {
+            const normalizedName = (sub.name || '').toLowerCase().trim();
+            // Skip if same name already tracked
+            if (existingNames.has(normalizedName)) continue;
+            // Skip if this exact email was already the source of a saved subscription
+            if (sub.sourceEmailId && existingEmailIds.has(sub.sourceEmailId)) continue;
+
+            const result = await addSubscription(
+                userId,
+                {
+                    name: sub.name,
+                    amount: sub.amount,
+                    billingCycle: sub.billingCycle,
+                    category: sub.category,
+                    renewalDate: sub.renewalDate,
+                    sourceEmailId: sub.sourceEmailId,
+                },
+                'ai-detected'
+            );
+            if (result.success) {
+                added++;
+                existingNames.add(normalizedName);
+                if (sub.sourceEmailId) existingEmailIds.add(sub.sourceEmailId);
+            }
+        }
 
         // ── Update lastSyncedAt on each connected email doc ────────────────────
         const now = new Date().toISOString();
@@ -324,7 +332,7 @@ export async function syncSubscriptions(
             )
         );
 
-        revalidatePath('/dashboard');
+
 
         return {
             success: true,
