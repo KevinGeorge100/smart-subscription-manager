@@ -5,7 +5,7 @@ import { initializeFirebase } from './index';
 import { FirebaseProvider } from './provider';
 
 // Initialize Firebase and get the SDKs
-const { firebaseApp, auth, firestore } = initializeFirebase();
+const { firebaseApp, auth, firestore, storage } = initializeFirebase();
 
 /**
  * A client-side component to provide the Firebase context.
@@ -17,6 +17,7 @@ export function FirebaseClientProvider({ children }: { children: ReactNode }) {
       firebaseApp={firebaseApp}
       auth={auth}
       firestore={firestore}
+      storage={storage}
     >
       {children}
     </FirebaseProvider>

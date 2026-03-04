@@ -9,7 +9,9 @@ export interface User {
   firstName: string;
   lastName: string;
   email: string;
+  photoURL?: string;
   createdAt?: Date;
+  updatedAt?: Date;
   settings?: {
     notifications: {
       email: boolean;

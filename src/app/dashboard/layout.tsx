@@ -1,11 +1,12 @@
 'use client';
 
-import { useUser, useFirebase } from '@/firebase';
+import { useUser, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
+import { doc } from 'firebase/firestore';
+import type { User as UserType } from '@/types';
 import { Button } from '@/components/ui/button';
 import { signOut } from 'firebase/auth';
-import { doc, getDoc } from 'firebase/firestore';
 import {
     BarChart3,
     CreditCard,
@@ -33,31 +34,28 @@ const navItems = [
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
     const { user, isUserLoading } = useUser();
-    const { auth } = useFirebase();
+    const { auth, firestore } = useFirebase();
     const router = useRouter();
     const pathname = usePathname();
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [userName, setUserName] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (user && auth && !userName) {
-            if (user.displayName) {
-                setUserName(user.displayName);
-                return;
-            }
-            // Fallback to fetch from Firestore if displayName isn't set
-            import('firebase/firestore').then(({ getFirestore, doc, getDoc }) => {
-                const db = getFirestore(auth.app);
-                getDoc(doc(db, 'users', user.uid)).then((docSnap) => {
-                    if (docSnap.exists()) {
-                        const data = docSnap.data();
-                        const fullName = `${data.firstName || ''} ${data.lastName || ''}`.trim();
-                        if (fullName) setUserName(fullName);
-                    }
-                }).catch(console.error);
-            });
-        }
-    }, [user, auth, userName]);
+    // Realtime Firestore profile — always fresh after profile saves
+    const userDocRef = useMemoFirebase(
+        () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
+        [user, firestore]
+    );
+    const { data: userData } = useDoc<UserType>(userDocRef);
+
+    // Resolved display name: Firestore first, then Firebase Auth, then email prefix
+    const displayName = userData
+        ? (`${userData.firstName || ''} ${userData.lastName || ''}`).trim() ||
+        user?.email?.split('@')[0] ||
+        'User'
+        : user?.displayName || user?.email?.split('@')[0] || 'User';
+
+    // Avatar: Firestore photoURL → Firebase Auth photoURL → initials
+    const photoURL = userData?.photoURL || user?.photoURL || null;
+    const avatarInitial = displayName[0]?.toUpperCase() ?? 'U';
 
     useEffect(() => {
         if (!isUserLoading && !user) {
@@ -117,17 +115,22 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 {/* User section */}
                 <div className="border-t border-sidebar-border p-4">
                     <div className="flex items-center gap-3">
-                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary text-sm font-semibold">
-                            {(userName ?? user.displayName ?? user.uid)?.[0]?.toUpperCase() ?? 'U'}
+                        <div className="h-9 w-9 rounded-full bg-primary/10 text-primary text-sm font-semibold overflow-hidden flex items-center justify-center shrink-0">
+                            {photoURL
+                                ? <img src={photoURL} alt={displayName} className="h-full w-full object-cover" />
+                                : avatarInitial
+                            }
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{userName ?? user.displayName ?? user.uid}</p>
+                            <p className="text-sm font-medium truncate">{displayName}</p>
+                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                         </div>
                         <Button
                             variant="ghost"
                             size="icon"
                             onClick={handleSignOut}
                             className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+                            aria-label="Sign out"
                         >
                             <LogOut className="h-4 w-4" />
                         </Button>
@@ -191,7 +194,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                         <ThemeToggle />
                         <NotificationCenter />
                         <span className="hidden sm:inline text-sm text-muted-foreground">
-                            {userName ?? user.displayName ?? user.uid}
+                            {displayName}
                         </span>
                         <Button
                             onClick={handleSignOut}
