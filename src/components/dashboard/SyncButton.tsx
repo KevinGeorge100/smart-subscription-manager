@@ -38,8 +38,8 @@ export function SyncButton({
                 onSyncComplete?.();
                 if (result.added === 0) {
                     toast({
-                        title: `✅ ${timeframe === '30d' ? 'Quick' : 'Deep'} Sync (DEBUG)`,
-                        description: `Scanned ${result.scanned} emails. AI returning: ${result.debugLogs?.slice(0, 150) || 'Nothing'}...`,
+                        title: `✅ ${timeframe === '30d' ? 'Quick' : 'Deep'} Sync Complete`,
+                        description: `Scanned ${result.scanned} emails across ${result.accountsScanned} account${result.accountsScanned === 1 ? '' : 's'} — no new subscriptions found.`,
                     });
                 } else {
                     toast({
