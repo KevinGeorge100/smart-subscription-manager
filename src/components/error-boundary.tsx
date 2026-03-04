@@ -9,6 +9,8 @@ interface Props {
     fallback?: ReactNode;
     /** Short label shown in the fallback card, e.g. "chart" */
     label?: string;
+    /** Pass a key that changes when you want the boundary to reset. */
+    resetKey?: string | number;
 }
 
 interface State {
@@ -19,11 +21,7 @@ interface State {
 /**
  * Catches render/lifecycle errors in a child component tree and
  * shows a friendly fallback instead of crashing the whole page.
- *
- * Usage:
- *   <ErrorBoundary label="chart">
- *     <FinancialPulse ... />
- *   </ErrorBoundary>
+ * Resets automatically when `resetKey` changes.
  */
 export class ErrorBoundary extends Component<Props, State> {
     constructor(props: Props) {
@@ -33,6 +31,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
     static getDerivedStateFromError(error: Error): State {
         return { hasError: true, error };
+    }
+
+    // Reset when resetKey prop changes
+    static getDerivedStateFromProps(props: Props, state: State): State | null {
+        if (state.hasError && props.resetKey !== undefined) {
+            // resetKey changed externally — clear the error
+            return { hasError: false };
+        }
+        return null;
     }
 
     override componentDidCatch(error: Error, info: ErrorInfo) {
@@ -58,11 +65,11 @@ export class ErrorBoundary extends Component<Props, State> {
                         </p>
                     </div>
                     <button
-                        onClick={() => window.location.reload()}
+                        onClick={() => this.setState({ hasError: false })}
                         className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/60 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
                     >
                         <RefreshCw className="h-3 w-3" />
-                        Reload
+                        Try Again
                     </button>
                 </div>
             );

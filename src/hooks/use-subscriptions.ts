@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useOptimistic, useCallback } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import { useUser, useFirestore, useCollection, useMemoFirebase } from '@/firebase';
 import { doc, collection, deleteDoc, setDoc, updateDoc, Timestamp } from 'firebase/firestore';
 import type { Subscription, SubscriptionFormData } from '@/types';
@@ -45,18 +45,27 @@ export function useSubscriptions() {
             .filter((sub): sub is Subscription => sub !== null);
     }, [rawSubscriptions]);
 
-    const [optimisticSubs, addOptimistic] = useOptimistic(
-        processedSubscriptions,
-        (state: Subscription[], action: { type: 'add' | 'delete'; payload: Subscription | string }) => {
-            if (action.type === 'add') {
-                return [...state, action.payload as Subscription];
-            }
-            if (action.type === 'delete') {
-                return state.filter((s) => s.id !== action.payload);
-            }
-            return state;
-        }
+    // Simple optimistic deletion set — IDs removed locally before Firestore confirms
+    const [deletedIds, setDeletedIds] = useState<Set<string>>(new Set());
+
+    // Merge: hide optimistically deleted items from the live list
+    const optimisticSubs = useMemo(
+        () => processedSubscriptions.filter((s) => !deletedIds.has(s.id)),
+        [processedSubscriptions, deletedIds]
     );
+
+    // Clear stale deletedIds once Firestore confirms removal (ID no longer in live list)
+    useMemo(() => {
+        if (deletedIds.size === 0) return;
+        const liveIds = new Set(processedSubscriptions.map((s) => s.id));
+        const stale = [...deletedIds].filter((id) => !liveIds.has(id));
+        if (stale.length > 0) setDeletedIds((prev) => {
+            const next = new Set(prev);
+            stale.forEach((id) => next.delete(id));
+            return next;
+        });
+    }, [processedSubscriptions, deletedIds]);
+
 
     const handleAdd = useCallback(
         async (data: SubscriptionFormData, editingSubscription: Subscription | null = null) => {
@@ -83,22 +92,6 @@ export function useSubscriptions() {
                 return;
             }
 
-            const tempId = `temp_${Date.now()}`;
-            const optimisticSub: Subscription = {
-                id: tempId,
-                ...data,
-                renewalDate: new Date(data.renewalDate),
-                userId: user.uid,
-                source: 'manual',
-                verified: true,
-                originalCurrency: 'INR',
-                amountInBaseCurrency: data.amount,
-                createdAt: new Date(),
-                updatedAt: new Date(),
-            };
-
-            addOptimistic({ type: 'add', payload: optimisticSub });
-
             try {
                 const ref = doc(collection(firestore, 'users', user.uid, 'subscriptions'));
                 await setDoc(ref, {
@@ -115,21 +108,24 @@ export function useSubscriptions() {
                 toast({ title: 'Error', description: 'Failed to add subscription.', variant: 'destructive' });
             }
         },
-        [user, firestore, addOptimistic, toast]
+        [user, firestore, toast]
     );
 
     const handleDelete = useCallback(
         async (id: string) => {
             if (!user || !firestore) return;
-            addOptimistic({ type: 'delete', payload: id });
+            // Immediately hide from UI
+            setDeletedIds((prev) => new Set(prev).add(id));
             try {
                 await deleteDoc(doc(firestore, 'users', user.uid, 'subscriptions', id));
                 toast({ title: 'Deleted', description: 'Subscription removed.' });
             } catch {
+                // Rollback the optimistic removal
+                setDeletedIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
                 toast({ title: 'Error', description: 'Failed to delete subscription.', variant: 'destructive' });
             }
         },
-        [user, firestore, addOptimistic, toast]
+        [user, firestore, toast]
     );
 
     const handleVerify = useCallback(
