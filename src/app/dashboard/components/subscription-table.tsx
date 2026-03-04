@@ -67,8 +67,18 @@ export function SubscriptionTable({
     isCompact = false,
 }: SubscriptionTableProps) {
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [removingId, setRemovingId] = useState<string | null>(null);
     const [mounted, setMounted] = useState(false);
     useEffect(() => setMounted(true), []);
+
+    // Animate row out, then call onDelete after the transition
+    const handleRemove = (id: string) => {
+        setRemovingId(id);
+        setTimeout(() => {
+            onDelete(id);
+            setRemovingId(null);
+        }, 300);
+    };
 
     const isUnverifiedAI = (sub: Subscription) =>
         sub.source === 'ai-detected' && !sub.verified;
@@ -154,7 +164,12 @@ export function SubscriptionTable({
                         {subscriptions.map((sub) => (
                             <div
                                 key={sub.id}
-                                className="flex items-center gap-4 rounded-lg border border-border/30 bg-muted/10 p-3 transition-colors hover:bg-muted/20"
+                                className="flex items-center gap-4 rounded-lg border border-border/30 bg-muted/10 p-3 transition-all duration-300 hover:bg-muted/20"
+                                style={{
+                                    opacity: removingId === sub.id ? 0 : 1,
+                                    transform: removingId === sub.id ? 'translateX(20px)' : 'translateX(0)',
+                                    pointerEvents: removingId === sub.id ? 'none' : undefined,
+                                }}
                             >
                                 {/* Name & Category */}
                                 <div className="flex-1 min-w-0">
@@ -227,7 +242,7 @@ export function SubscriptionTable({
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-8 w-8 text-muted-foreground hover:text-rose-400"
-                                                        onClick={() => onDelete(sub.id)}
+                                                        onClick={() => handleRemove(sub.id)}
                                                     >
                                                         <X className="h-3.5 w-3.5" />
                                                     </Button>
@@ -287,7 +302,7 @@ export function SubscriptionTable({
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
                                                     <AlertDialogAction
-                                                        onClick={() => onDelete(sub.id)}
+                                                        onClick={() => handleRemove(sub.id)}
                                                         className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                                                     >
                                                         Delete

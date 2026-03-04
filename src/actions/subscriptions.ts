@@ -4,9 +4,13 @@
  * Server Actions for Subscription CRUD.
  * These run on the server and are called directly from client components.
  * They use Firebase Admin SDK for secure, privileged Firestore access.
+ *
+ * NOTE: revalidatePath is intentionally NOT called here.
+ * The client uses Firestore realtime listeners (useCollection) which update
+ * the UI instantly without needing a full RSC cache invalidation.
+ * Calling revalidatePath caused a brief "Failed to load dashboard" crash.
  */
 
-import { revalidatePath } from 'next/cache';
 import type { SubscriptionFormData, SubscriptionSource } from '@/types';
 
 // ──────────────────────────────────────────────
@@ -36,16 +40,14 @@ export async function addSubscription(
             id: ref.id,
             userId,
             source,
-            // New integrity fields:
-            verified: source === 'manual',      // manual = pre-verified; ai-detected = needs review
-            originalCurrency: 'INR',             // default; AI parser may override via direct Firestore writes
-            amountInBaseCurrency: data.amount,   // INR by default; toINR() applied at parse time for foreign currency
+            verified: source === 'manual',
+            originalCurrency: 'INR',
+            amountInBaseCurrency: data.amount,
             renewalDate: data.renewalDate,
             createdAt: new Date(),
             updatedAt: new Date(),
         });
 
-        revalidatePath('/dashboard');
         return { success: true, id: ref.id };
     } catch (error) {
         console.error('[addSubscription]', error);
@@ -75,7 +77,6 @@ export async function updateSubscription(
             updatedAt: new Date(),
         });
 
-        revalidatePath('/dashboard');
         return { success: true };
     } catch (error) {
         console.error('[updateSubscription]', error);
@@ -97,7 +98,6 @@ export async function deleteSubscription(userId: string, subscriptionId: string)
             .doc(subscriptionId)
             .delete();
 
-        revalidatePath('/dashboard');
         return { success: true };
     } catch (error) {
         console.error('[deleteSubscription]', error);
