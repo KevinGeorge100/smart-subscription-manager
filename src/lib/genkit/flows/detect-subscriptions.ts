@@ -80,7 +80,8 @@ Return ONLY a valid JSON object matching exactly this schema and nothing else:
                 const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
 
                 if (rawContent) {
-                    const parsed = JSON.parse(rawContent);
+                    const cleanContent = rawContent.replace(/^```json\s*/, '').replace(/\s*```$/, '').trim();
+                    const parsed = JSON.parse(cleanContent);
                     if (parsed.subscriptions && Array.isArray(parsed.subscriptions)) {
                         console.log(`[detectSubscriptions] Gemini returned ${parsed.subscriptions.length} subscriptions in this batch.`);
                         allSubscriptions.push(...parsed.subscriptions);
