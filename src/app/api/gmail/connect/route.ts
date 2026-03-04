@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
         const redirectUri = getRedirectUri(request);
         const oauth2Client = getOAuth2Client(redirectUri);
 
-        console.log(`[/api/gmail/connect] Using redirect URI: ${redirectUri}`);
+
 
         const authUrl = oauth2Client.generateAuthUrl({
             access_type: 'offline',   // Ensures we get a refresh_token

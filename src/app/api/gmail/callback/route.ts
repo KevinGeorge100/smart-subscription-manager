@@ -60,7 +60,7 @@ export async function GET(request: NextRequest) {
         const redirectUri = getRedirectUri(request);
         const oauth2Client = getOAuth2Client(redirectUri);
 
-        console.log(`[/api/gmail/callback] Using redirect URI: ${redirectUri}`);
+
 
         // ── Exchange auth code for tokens ─────────────────────────────────────
         const { tokens } = await oauth2Client.getToken(code);
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
             });
         }
 
-        console.log(`[/api/gmail/callback] Connected Gmail "${gmailAddress}" for user ${userId}`);
+
 
         return NextResponse.redirect(new URL('/dashboard?sync=connected', request.url));
     } catch (error) {

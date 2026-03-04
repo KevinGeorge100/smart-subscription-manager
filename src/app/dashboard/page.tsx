@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
 import { getGmailConnectionStatus, syncSubscriptions } from '@/actions/gmail';
@@ -14,11 +15,40 @@ import { useAnalytics } from '@/hooks/use-analytics';
 import { useAIInsights } from '@/hooks/use-ai-insights';
 
 import { StatsCards } from './components/stats-cards';
-import { FinancialPulse } from './components/financial-pulse';
-import { QuickSyncCard } from './components/quick-sync-card';
-import { KillListCard } from './components/kill-list-card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Card, CardContent } from '@/components/ui/card';
+
+// Heavy components — lazy loaded to keep initial bundle lean
+const FinancialPulse = dynamic(
+    () => import('./components/financial-pulse').then((m) => ({ default: m.FinancialPulse })),
+    {
+        ssr: false,
+        loading: () => (
+            <Card className="glass border-border/40">
+                <CardContent className="p-6">
+                    <Skeleton className="h-52 w-full rounded-lg" />
+                </CardContent>
+            </Card>
+        ),
+    }
+);
+
+const QuickSyncCard = dynamic(
+    () => import('./components/quick-sync-card').then((m) => ({ default: m.QuickSyncCard })),
+    { ssr: false, loading: () => <Card className="glass border-border/40"><CardContent className="p-6"><Skeleton className="h-32 w-full rounded-lg" /></CardContent></Card> }
+);
+
+const KillListCard = dynamic(
+    () => import('./components/kill-list-card').then((m) => ({ default: m.KillListCard })),
+    { ssr: false, loading: () => <Card className="glass border-border/40"><CardContent className="p-6"><Skeleton className="h-24 w-full rounded-lg" /></CardContent></Card> }
+);
+
+const UpcomingRenewals = dynamic(
+    () => import('./components/upcoming-renewals').then((m) => ({ default: m.UpcomingRenewals })),
+    { ssr: false, loading: () => <Card className="glass border-border/40"><CardContent className="p-6"><Skeleton className="h-24 w-full rounded-lg" /></CardContent></Card> }
+);
+
 import { SubscriptionTable } from './components/subscription-table';
-import { UpcomingRenewals } from './components/upcoming-renewals';
 import { AddSubscriptionModal } from './components/add-subscription-modal';
 
 import { Button } from '@/components/ui/button';
@@ -104,7 +134,7 @@ export default function DashboardPage() {
         const hoursSinceSync = differenceInHours(new Date(), lastSync);
 
         if (hoursSinceSync >= 24) {
-            console.log(`[Auto-Sync] Triggering sync. Last sync was ${hoursSinceSync}h ago.`);
+            // Auto-sync triggered (last sync was >= 24h ago)
 
             toast({
                 title: "🔄 Auto-Syncing",

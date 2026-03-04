@@ -227,6 +227,7 @@ export function SubscriptionTable({
                                                         size="icon"
                                                         className="h-8 w-8 text-muted-foreground hover:text-emerald-400"
                                                         onClick={() => onVerify(sub.id)}
+                                                        aria-label="Confirm subscription"
                                                     >
                                                         <CheckCircle2 className="h-3.5 w-3.5" />
                                                     </Button>
@@ -243,6 +244,7 @@ export function SubscriptionTable({
                                                         size="icon"
                                                         className="h-8 w-8 text-muted-foreground hover:text-rose-400"
                                                         onClick={() => handleRemove(sub.id)}
+                                                        aria-label="Not a subscription — dismiss"
                                                     >
                                                         <X className="h-3.5 w-3.5" />
                                                     </Button>
@@ -277,6 +279,7 @@ export function SubscriptionTable({
                                             size="icon"
                                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                             onClick={() => onEdit(sub)}
+                                            aria-label={`Edit ${sub.name}`}
                                         >
                                             <Edit3 className="h-3.5 w-3.5" />
                                         </Button>
@@ -287,6 +290,7 @@ export function SubscriptionTable({
                                                     size="icon"
                                                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                                     onClick={() => setDeletingId(sub.id)}
+                                                    aria-label={`Delete ${sub.name}`}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>

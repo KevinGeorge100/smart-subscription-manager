@@ -5,10 +5,26 @@ import { FirebaseClientProvider } from '@/firebase';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export const metadata: Metadata = {
-  title: 'SubZero — Zero-Touch Subscription Tracking',
+  title: {
+    default: 'SubZero — Zero-Touch Subscription Tracking',
+    template: '%s | SubZero',
+  },
   description:
-    'AI-powered subscription management. Track, optimize, and eliminate wasted spend with zero effort.',
+    'AI-powered subscription management. Connect Gmail, let AI detect your subscriptions, track renewals, and eliminate wasted spend — automatically.',
+  keywords: ['subscription manager', 'AI finance', 'Gmail sync', 'subscription tracking', 'spend management'],
+  authors: [{ name: 'SubZero' }],
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'SubZero — Zero-Touch Subscription Tracking',
+    description: 'AI-powered subscription management. Track, optimize, and eliminate wasted spend with zero effort.',
+    type: 'website',
+    siteName: 'SubZero',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'SubZero — AI Subscription Manager',
+    description: 'Connect Gmail. AI finds your subscriptions. You stay in control.',
+  },
 };
 
 export default function RootLayout({
