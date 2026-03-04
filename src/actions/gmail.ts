@@ -146,7 +146,7 @@ async function scanGmailAccount(
     gmail: ReturnType<typeof google.gmail>,
     accountLabel: string,
     timeframe: string = '30d'
-): Promise<string[]> {
+): Promise<{ text: string; messageId: string }[]> {
     const query =
         `(invoice OR receipt OR subscription OR billed OR "payment confirmation") newer_than:${timeframe}`;
 
@@ -159,7 +159,7 @@ async function scanGmailAccount(
     const messages = listResponse.data.messages ?? [];
     if (messages.length === 0) return [];
 
-    const emailTexts: string[] = [];
+    const emailTexts: { text: string; messageId: string }[] = [];
 
     await Promise.allSettled(
         messages.map(async (msg) => {
@@ -179,7 +179,10 @@ async function scanGmailAccount(
 
             if (text.trim()) {
                 // Prefix with account so AI knows which inbox this came from
-                emailTexts.push(`[Account: ${accountLabel}]\nSubject: ${subject}\n\n${text}`);
+                emailTexts.push({
+                    text: `[Account: ${accountLabel}]\nSubject: ${subject}\n\n${text}`,
+                    messageId: msg.id,
+                });
             }
         })
     );
@@ -247,7 +250,7 @@ export async function syncSubscriptions(
         }
 
         // ── Scan each account and collect all email texts ──────────────────────
-        const allEmailTexts: string[] = [];
+        const allEmailTexts: { text: string; messageId: string }[] = [];
 
         await Promise.allSettled(
             snapshot.docs.map(async (doc) => {
@@ -286,6 +289,7 @@ export async function syncSubscriptions(
                         billingCycle: sub.billingCycle,
                         category: sub.category,
                         renewalDate: sub.renewalDate,
+                        sourceEmailId: sub.sourceEmailId,
                     },
                     'ai-detected'
                 );

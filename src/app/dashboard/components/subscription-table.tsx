@@ -30,7 +30,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
-import { BrainCircuit, CheckCircle2, Edit3, Search, Trash2, User } from 'lucide-react';
+import { BrainCircuit, CheckCircle2, Edit3, Search, Trash2, User, Mail } from 'lucide-react';
 import type { Subscription } from '@/types';
 import { CATEGORIES } from '@/types';
 import { format } from 'date-fns';
@@ -207,6 +207,24 @@ export function SubscriptionTable({
                                         >
                                             <CheckCircle2 className="h-3.5 w-3.5" />
                                         </Button>
+                                    )}
+                                    {/* View original email in Gmail */}
+                                    {sub.source === 'ai-detected' && sub.sourceEmailId && (
+                                        <a
+                                            href={`https://mail.google.com/mail/u/0/#inbox/${sub.sourceEmailId}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            title="View original email in Gmail"
+                                        >
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-muted-foreground hover:text-blue-400"
+                                                asChild={false}
+                                            >
+                                                <Mail className="h-3.5 w-3.5" />
+                                            </Button>
+                                        </a>
                                     )}
                                     <Button
                                         variant="ghost"

@@ -63,6 +63,8 @@ export interface Subscription {
   originalCurrency: string;
   /** Amount normalised to INR using hardcoded exchange rates. */
   amountInBaseCurrency: number;
+  /** The Gmail message ID this was detected from, if any. */
+  sourceEmailId?: string;
   reminderSentAt?: Date | null;
   createdAt?: Date;
   updatedAt?: Date;
@@ -84,6 +86,7 @@ export const subscriptionFormSchema = z.object({
     errorMap: () => ({ message: 'Select a category' }),
   }),
   renewalDate: z.coerce.date({ errorMap: () => ({ message: 'Select a renewal date' }) }),
+  sourceEmailId: z.string().optional(),
 });
 
 export type SubscriptionFormData = z.infer<typeof subscriptionFormSchema>;
