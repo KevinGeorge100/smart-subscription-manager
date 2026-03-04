@@ -1,95 +1,22 @@
 'use server';
 
 /**
- * Genkit AI Flow: Extract Subscriptions from Email Text
+ * AI Flow: Extract Subscriptions from Email Text (NATIVE REST API)
  *
- * Takes raw email body text, sends it to Gemini, and returns structured
- * subscription data found in those emails.
+ * Takes raw email body text, sends it directly to Gemini 1.5 Flash via REST,
+ * and returns structured subscription data found in those emails.
+ * Bypasses Genkit telemetry entirely for maximum Vercel edge stability.
  */
 
-import { genkit, z } from 'genkit';
-import { googleAI } from '@genkit-ai/google-genai';
 import type { SubscriptionFormData } from '@/types';
-import { BILLING_CYCLES, CATEGORIES } from '@/types';
-
-// ── Genkit Instance ──────────────────────────────────────────────────────────
-
-const ai = genkit({
-    plugins: [googleAI()],
-    model: 'googleai/gemini-1.5-flash',
-});
-
-// ── Schemas ──────────────────────────────────────────────────────────────────
-
-const EmailBatchInputSchema = z.object({
-    emailTexts: z.array(z.string()).min(1).max(100),
-});
-
-const DetectedSubscriptionSchema = z.object({
-    name: z.string(),
-    amount: z.number().positive(),
-    billingCycle: z.enum(BILLING_CYCLES),
-    category: z.enum(CATEGORIES),
-    renewalDate: z.string(), // ISO date string e.g. "2025-03-15"
-    confidence: z.number().min(0).max(1),
-    emailSubject: z.string().optional(),
-});
-
-const ExtractOutputSchema = z.object({
-    subscriptions: z.array(DetectedSubscriptionSchema),
-});
 
 export interface DetectedSubscription extends SubscriptionFormData {
     confidence: number;
     emailSubject?: string;
 }
 
-// ── Flow ─────────────────────────────────────────────────────────────────────
-
-const extractSubscriptionFlow = ai.defineFlow(
-    {
-        name: 'extractSubscriptionFlow',
-        inputSchema: EmailBatchInputSchema,
-        outputSchema: ExtractOutputSchema,
-    },
-    async ({ emailTexts }) => {
-        const combinedText = emailTexts
-            .map((text, i) => `--- Email ${i + 1} ---\n${text.slice(0, 2000)}`)
-            .join('\n\n');
-
-        const prompt = `You are a financial data extraction assistant. Analyze the following email texts and extract information about recurring subscription services or software.
-
-For each subscription found, provide:
-- name: The service or company name (e.g., "Netflix", "Spotify", "AWS")
-- amount: The exact billed amount as a number (e.g., 9.99)
-- billingCycle: Either "monthly" or "yearly"
-- category: One of: "Streaming", "Software", "Cloud", "Education", "Utilities", "Others"
-- renewalDate: The next billing/renewal date in ISO format YYYY-MM-DD. If only a billing date is mentioned (not renewal), add the billing cycle to that date. If unknown, use a date 30 days from today.
-- confidence: A number 0-1 representing how confident you are this is a recurring subscription (not a one-time purchase)
-- emailSubject: A brief description of what email this came from
-
-Only include services that appear to be RECURRING subscriptions. Ignore one-time purchases, shipping notifications, and promotional emails.
-If no subscriptions are found, return an empty array.
-
-Return ONLY valid JSON matching this exact schema:
-{ "subscriptions": [ { "name": "...", "amount": 0.00, "billingCycle": "monthly"|"yearly", "category": "...", "renewalDate": "YYYY-MM-DD", "confidence": 0.0, "emailSubject": "..." } ] }
-
-Emails to analyze:
-${combinedText}`;
-
-        const { output } = await ai.generate({
-            prompt,
-            output: { schema: ExtractOutputSchema },
-        });
-
-        return output ?? { subscriptions: [] };
-    }
-);
-
-// ── Public API ────────────────────────────────────────────────────────────────
-
 /**
- * Run the Genkit extraction flow on a batch of raw email texts.
+ * Run Gemini extraction on a batch of raw email texts.
  * Filters results to those with confidence >= 0.6.
  */
 export async function detectSubscriptions(
@@ -97,35 +24,86 @@ export async function detectSubscriptions(
 ): Promise<DetectedSubscription[]> {
     if (!emailTexts.length) return [];
 
+    const apiKey = process.env.GOOGLE_GENAI_API_KEY || process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        console.error('[detectSubscriptions] Missing GOOGLE_GENAI_API_KEY environment variable.');
+        return [];
+    }
+
     try {
-        const CHUNK_SIZE = 20; // Process emails in batches to avoid Gemini payload limits
-        const allSubscriptions: any[] = [];
+        const CHUNK_SIZE = 15; // Process emails in batches to avoid payload limits
+        const allSubscriptions: DetectedSubscription[] = [];
 
         for (let i = 0; i < emailTexts.length; i += CHUNK_SIZE) {
             const chunk = emailTexts.slice(i, i + CHUNK_SIZE);
+
+            const combinedText = chunk
+                .map((text, idx) => `--- Email ${idx + 1} ---\n${text.slice(0, 3000)}`)
+                .join('\n\n');
+
+            const prompt = `You are a financial data extraction assistant. Analyze the following email texts and extract information about recurring subscription services or software.
+
+For each subscription found, provide:
+- name: The service or company name (e.g., "Netflix", "Spotify", "AWS")
+- amount: The exact billed amount as a number (e.g., 9.99)
+- billingCycle: Either "monthly" or "yearly"
+- category: One of: "Streaming", "Software", "Cloud", "Education", "Utilities", "Others"
+- renewalDate: The next billing/renewal date in ISO format YYYY-MM-DD. If unknown, use a date 30 days from today.
+- confidence: A number between 0 and 1 representing your confidence (e.g., 0.95).
+- emailSubject: A brief description of the email's subject or context.
+
+Return ONLY a valid JSON object matching exactly this schema and nothing else:
+{ "subscriptions": [ { "name": "string", "amount": 0, "billingCycle": "monthly", "category": "Streaming", "renewalDate": "YYYY-MM-DD", "confidence": 0, "emailSubject": "string" } ] }`;
+
             try {
-                const result = await extractSubscriptionFlow({ emailTexts: chunk });
-                if (result.subscriptions) {
-                    allSubscriptions.push(...result.subscriptions);
+                console.log(`[detectSubscriptions] Sending ${chunk.length} emails natively to Gemini via REST API...`);
+
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt + '\n' + combinedText }] }],
+                        generationConfig: {
+                            responseMimeType: "application/json",
+                            temperature: 0.1,
+                        }
+                    })
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`[detectSubscriptions] Gemini API Error HTTP ${response.status}:`, errorText);
+                    continue;
                 }
-            } catch (chunkError) {
-                console.error(`[detectSubscriptions] Error processing chunk ${i}-${i + CHUNK_SIZE}:`, chunkError);
+
+                const data = await response.json();
+                const rawContent = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                if (rawContent) {
+                    const parsed = JSON.parse(rawContent);
+                    if (parsed.subscriptions && Array.isArray(parsed.subscriptions)) {
+                        console.log(`[detectSubscriptions] Gemini returned ${parsed.subscriptions.length} subscriptions in this batch.`);
+                        allSubscriptions.push(...parsed.subscriptions);
+                    }
+                }
+            } catch (chunkError: any) {
+                console.error(`[detectSubscriptions] Error processing chunk ${i}-${i + CHUNK_SIZE}:`, chunkError.message);
             }
         }
 
         return allSubscriptions
             .filter((s) => s.confidence >= 0.6)
             .map((s) => ({
-                name: s.name,
-                amount: s.amount,
-                billingCycle: s.billingCycle,
-                category: s.category,
-                renewalDate: new Date(s.renewalDate),
-                confidence: s.confidence,
-                emailSubject: s.emailSubject,
+                name: s.name || 'Unknown',
+                amount: Number(s.amount) || 0,
+                billingCycle: s.billingCycle === 'yearly' ? 'yearly' : 'monthly',
+                category: (s.category as any) || 'Others',
+                renewalDate: new Date(s.renewalDate || Date.now() + 30 * 24 * 60 * 60 * 1000),
+                confidence: Number(s.confidence) || 1,
+                emailSubject: s.emailSubject || '',
             }));
-    } catch (error) {
-        console.error('[detectSubscriptions] Genkit flow error:', error);
+    } catch (error: any) {
+        console.error('[detectSubscriptions] Global AI generation error:', error.message);
         return [];
     }
 }
