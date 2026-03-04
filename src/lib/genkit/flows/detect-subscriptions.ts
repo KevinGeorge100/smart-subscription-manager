@@ -22,7 +22,7 @@ const ai = genkit({
 // ── Schemas ──────────────────────────────────────────────────────────────────
 
 const EmailBatchInputSchema = z.object({
-    emailTexts: z.array(z.string()).min(1).max(50),
+    emailTexts: z.array(z.string()).min(1).max(100),
 });
 
 const DetectedSubscriptionSchema = z.object({
@@ -98,9 +98,22 @@ export async function detectSubscriptions(
     if (!emailTexts.length) return [];
 
     try {
-        const result = await extractSubscriptionFlow({ emailTexts });
+        const CHUNK_SIZE = 20; // Process emails in batches to avoid Gemini payload limits
+        const allSubscriptions: any[] = [];
 
-        return result.subscriptions
+        for (let i = 0; i < emailTexts.length; i += CHUNK_SIZE) {
+            const chunk = emailTexts.slice(i, i + CHUNK_SIZE);
+            try {
+                const result = await extractSubscriptionFlow({ emailTexts: chunk });
+                if (result.subscriptions) {
+                    allSubscriptions.push(...result.subscriptions);
+                }
+            } catch (chunkError) {
+                console.error(`[detectSubscriptions] Error processing chunk ${i}-${i + CHUNK_SIZE}:`, chunkError);
+            }
+        }
+
+        return allSubscriptions
             .filter((s) => s.confidence >= 0.6)
             .map((s) => ({
                 name: s.name,
