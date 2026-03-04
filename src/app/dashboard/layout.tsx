@@ -47,12 +47,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     );
     const { data: userData } = useDoc<UserType>(userDocRef);
 
-    // Resolved display name: Firestore first, then Firebase Auth, then email prefix
-    const displayName = userData
-        ? (`${userData.firstName || ''} ${userData.lastName || ''}`).trim() ||
-        user?.email?.split('@')[0] ||
-        'User'
-        : user?.displayName || user?.email?.split('@')[0] || 'User';
+    // Resolved display name: Firestore firstName+lastName → Auth displayName → email prefix
+    const firestoreName = userData
+        ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
+        : '';
+    const displayName = firestoreName || user?.displayName || user?.email?.split('@')[0] || 'User';
 
     // Avatar: Firestore photoURL → Firebase Auth photoURL → initials
     const photoURL = userData?.photoURL || user?.photoURL || null;

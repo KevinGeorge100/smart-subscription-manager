@@ -64,12 +64,41 @@ export default function SettingsPage() {
     const [photoUploading, setPhotoUploading] = useState(false);
 
     useEffect(() => {
-        if (userData) {
-            setFirstName(userData.firstName || '');
-            setLastName(userData.lastName || '');
-            setPhotoURL(userData.photoURL || user?.photoURL || '');
+        if (!userData && !user) return;
+
+        // Helper: detect if a "name" is actually an email prefix (e.g. "kegeorge5002")
+        const looksLikeEmailPrefix = (name: string) =>
+            !!name && (/\d/.test(name) || !name.includes(' ')) && !name.includes(' ');
+
+        const storedFirst = userData?.firstName || '';
+        const storedLast = userData?.lastName || '';
+        const storedFull = `${storedFirst} ${storedLast}`.trim();
+
+        // If Firestore has a real first+last name, use it
+        if (storedFirst && storedLast) {
+            setFirstName(storedFirst);
+            setLastName(storedLast);
+        } else if (storedFirst && !looksLikeEmailPrefix(storedFirst)) {
+            // Has a reasonable first name only
+            setFirstName(storedFirst);
+            setLastName(storedLast);
+        } else {
+            // Firestore name looks like an email prefix — fall back to Firebase Auth displayName
+            const authName = user?.displayName || '';
+            if (authName) {
+                const parts = authName.trim().split(' ');
+                setFirstName(parts[0] || '');
+                setLastName(parts.slice(1).join(' ') || '');
+            } else {
+                // Last resort: keep whatever is stored (user can fix it)
+                setFirstName(storedFirst);
+                setLastName(storedLast);
+            }
         }
+
+        setPhotoURL(userData?.photoURL || user?.photoURL || '');
     }, [userData, user]);
+
 
     // ── Notification state ────────────────────────────────────────────────────
     const [notifSettings, setNotifSettings] = useState({ email: true, dashboard: true });
@@ -86,13 +115,16 @@ export default function SettingsPage() {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [passwordSaving, setPasswordSaving] = useState(false);
 
-    // ── Derived display name ──────────────────────────────────────────────────
-    const displayName = userData
-        ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim() ||
-        user?.displayName ||
-        user?.email?.split('@')[0] ||
-        'User'
-        : user?.displayName || user?.email?.split('@')[0] || 'User';
+    // ── Derived display name — uses form state so preview updates live ────────
+    const displayName = (() => {
+        // Use the currently-typed form values (most up-to-date)
+        const formName = `${firstName} ${lastName}`.trim();
+        if (formName) return formName;
+        // Fall back to Firebase Auth displayName (e.g. set by Google OAuth)
+        if (user?.displayName) return user.displayName;
+        // Last resort: email prefix (never shows a UID)
+        return user?.email?.split('@')[0] || 'User';
+    })();
 
     const avatarInitial = displayName[0]?.toUpperCase() ?? 'U';
     const isEmailProvider = user?.providerData?.some((p) => p.providerId === 'password');
