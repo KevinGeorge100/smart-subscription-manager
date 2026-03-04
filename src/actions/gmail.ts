@@ -88,23 +88,55 @@ function decodeBase64(encoded: string): string {
 
 // ── Helper: extract plain text from MIME parts ────────────────────────────────
 
-function extractTextFromParts(
-    parts: Array<{
-        mimeType?: string | null;
-        body?: { data?: string | null } | null;
-        parts?: unknown[] | null;
-    }> | null | undefined
-): string {
-    if (!parts) return '';
-    for (const part of parts) {
+function extractTextFromPayload(payload: any): string {
+    if (!payload) return '';
+
+    let plainText = '';
+    let htmlText = '';
+
+    const traverse = (part: any) => {
+        if (!part) return;
+
+        // Sometimes data is at the top level
         if (part.mimeType === 'text/plain' && part.body?.data) {
-            return decodeBase64(part.body.data);
+            plainText += decodeBase64(part.body.data) + '\n';
+        } else if (part.mimeType === 'text/html' && part.body?.data) {
+            htmlText += decodeBase64(part.body.data) + '\n';
         }
-        if (part.parts) {
-            const nested = extractTextFromParts(part.parts as typeof parts);
-            if (nested) return nested;
+
+        // Traverse nested parts (multipart/alternative, multipart/mixed)
+        if (part.parts && Array.isArray(part.parts)) {
+            for (const nested of part.parts) {
+                traverse(nested);
+            }
         }
+    };
+
+    traverse(payload);
+
+    if (plainText.trim()) {
+        return plainText.trim();
     }
+
+    // Fallback to HTML, strip basic tags to reduce token payload
+    if (htmlText.trim()) {
+        return htmlText
+            .replace(/<style[^>]*>.*?<\/style>/gis, '')
+            .replace(/<script[^>]*>.*?<\/script>/gis, '')
+            .replace(/<[^>]+>/g, ' ')  // Strip HTML tags
+            .replace(/\s+/g, ' ')      // Normalize whitespace
+            .replace(/&nbsp;/ig, ' ')  // Strip common HTML entities
+            .trim();
+    }
+
+    // Last resort block: checking top level `body.data` for unknown mimes
+    if (payload.body?.data) {
+        return decodeBase64(payload.body.data)
+            .replace(/<[^>]+>/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
     return '';
 }
 
@@ -140,15 +172,7 @@ async function scanGmailAccount(
             });
 
             const payload = fullMsg.data.payload;
-            let text = '';
-
-            if (payload?.body?.data) {
-                text = decodeBase64(payload.body.data);
-            } else if (payload?.parts) {
-                text = extractTextFromParts(
-                    payload.parts as Parameters<typeof extractTextFromParts>[0]
-                );
-            }
+            const text = extractTextFromPayload(payload);
 
             const subject =
                 payload?.headers?.find((h) => h.name?.toLowerCase() === 'subject')?.value ?? '';
