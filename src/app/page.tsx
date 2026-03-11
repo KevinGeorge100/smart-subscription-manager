@@ -38,16 +38,23 @@ const fadeIn = {
   show: { opacity: 1, transition: { duration: 0.8 } },
 };
 
-function Section({ children, className = '' }: { children: React.ReactNode; className?: string }) {
+function Section({ children, className = '', style, id }: {
+  children: React.ReactNode;
+  className?: string;
+  style?: React.CSSProperties;
+  id?: string;
+}) {
   const ref = useRef(null);
   const inView = useInView(ref, { once: true, margin: '-80px' });
   return (
     <motion.section
       ref={ref}
+      id={id}
       initial="hidden"
       animate={inView ? 'show' : 'hidden'}
       variants={stagger}
       className={className}
+      style={style}
     >
       {children}
     </motion.section>
