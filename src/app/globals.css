@@ -102,50 +102,107 @@
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-300 via-violet-400 to-cyan-300;
   }
 
+  /* ─── Grain Noise Overlay ─── */
+  .grain-overlay::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 180px 180px;
+    animation: noise-shift 8s steps(2) infinite;
+  }
+
+  @keyframes noise-shift {
+    0%   { background-position: 0 0; }
+    10%  { background-position: -5% -10%; }
+    20%  { background-position: -15% 5%; }
+    30%  { background-position: 7% -25%; }
+    40%  { background-position: 20% 25%; }
+    50%  { background-position: -25% 10%; }
+    60%  { background-position: 15% 5%; }
+    70%  { background-position: 0% 15%; }
+    80%  { background-position: 25% 35%; }
+    90%  { background-position: -10% 10%; }
+    100% { background-position: 0 0; }
+  }
+
+  /* ─── Shimmer sweep (for badge) ─── */
+  .shimmer-badge {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .shimmer-badge::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%   { left: -100%; }
+    60%  { left: 150%; }
+    100% { left: 150%; }
+  }
+
+  /* ─── Icon halo pulse ─── */
+  .icon-halo {
+    animation: icon-pulse 3s ease-in-out infinite;
+  }
+
+  @keyframes icon-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(139, 168, 255, 0); }
+    50%       { box-shadow: 0 0 0 8px rgba(139, 168, 255, 0.08); }
+  }
+
+  /* ─── Pill navbar ─── */
+  .nav-pill {
+    backdrop-filter: blur(20px) saturate(180%);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(10, 12, 24, 0.80);
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.04),
+      0 8px 32px rgba(0,0,0,0.4),
+      0 0 80px rgba(99, 141, 255, 0.05);
+  }
+
+  /* ─── Animate pulse glow ─── */
   .animate-pulse-glow {
     animation: pulse-glow 3s ease-in-out infinite;
   }
 
   @keyframes pulse-glow {
-
-    0%,
-    100% {
-      box-shadow: 0 0 15px hsl(217 91% 60% / 0.1);
-    }
-
-    50% {
-      box-shadow: 0 0 30px hsl(217 91% 60% / 0.25);
-    }
+    0%, 100% { box-shadow: 0 0 15px hsl(217 91% 60% / 0.1); }
+    50%       { box-shadow: 0 0 30px hsl(217 91% 60% / 0.25); }
   }
 
-  /* Marquee ticker */
+  /* ─── Marquee ticker ─── */
   .animate-marquee {
     animation: marquee 30s linear infinite;
   }
 
   @keyframes marquee {
-    0% {
-      transform: translateX(0);
-    }
-
-    100% {
-      transform: translateX(-50%);
-    }
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
   }
 
-  /* OrbitSpin for the kinetic sphere */
+  /* ─── Orbit animations (kinetic sphere) ─── */
   .animate-orbit {
     animation: orbit 20s linear infinite;
   }
 
   @keyframes orbit {
-    0% {
-      transform: rotate(0deg);
-    }
-
-    100% {
-      transform: rotate(360deg);
-    }
+    0%   { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
   }
 
   .animate-orbit-reverse {
@@ -153,28 +210,45 @@
   }
 
   @keyframes orbit-reverse {
-    0% {
-      transform: rotate(360deg);
-    }
-
-    100% {
-      transform: rotate(0deg);
-    }
+    0%   { transform: rotate(360deg); }
+    100% { transform: rotate(0deg); }
   }
 
+  /* ─── Float animation ─── */
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
 
   @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50%       { transform: translateY(-20px); }
+  }
 
-    0%,
-    100% {
-      transform: translateY(0px);
-    }
+  /* ─── Blob drift (CTA section) ─── */
+  .animate-blob {
+    animation: blob-drift 12s ease-in-out infinite;
+  }
 
-    50% {
-      transform: translateY(-20px);
-    }
+  .animate-blob-delay {
+    animation: blob-drift 15s ease-in-out infinite reverse;
+    animation-delay: -4s;
+  }
+
+  @keyframes blob-drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%       { transform: translate(40px, -30px) scale(1.05); }
+    66%       { transform: translate(-20px, 20px) scale(0.97); }
+  }
+
+  /* ─── Word cycle ─── */
+  @keyframes word-in {
+    0%   { opacity: 0; transform: translateY(14px); }
+    15%  { opacity: 1; transform: translateY(0); }
+    80%  { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-14px); }
+  }
+
+  .animate-word-in {
+    animation: word-in 3s ease-in-out infinite;
   }
 }
