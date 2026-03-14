@@ -208,10 +208,10 @@ export function SubscriptionTable({
                                 {/* Amount */}
                                 <div className="text-right shrink-0">
                                     <p className="font-semibold text-sm">
-                                        ₹{(sub.amount ?? 0).toFixed(2)}
+                                        ₹{sub.amount.toFixed(2)}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        /{(sub.billingCycle ?? 'monthly') === 'monthly' ? 'mo' : 'yr'}
+                                        /{sub.billingCycle === 'monthly' ? 'mo' : 'yr'}
                                     </p>
                                 </div>
 
@@ -279,7 +279,7 @@ export function SubscriptionTable({
                                             size="icon"
                                             className="h-8 w-8 text-muted-foreground hover:text-foreground"
                                             onClick={() => onEdit(sub)}
-                                            aria-label={`Edit ${sub.name ?? 'subscription'}`}
+                                            aria-label={`Edit ${sub.name}`}
                                         >
                                             <Edit3 className="h-3.5 w-3.5" />
                                         </Button>
@@ -290,7 +290,7 @@ export function SubscriptionTable({
                                                     size="icon"
                                                     className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                                     onClick={() => setDeletingId(sub.id)}
-                                                    aria-label={`Delete ${sub.name ?? 'subscription'}`}
+                                                    aria-label={`Delete ${sub.name}`}
                                                 >
                                                     <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>

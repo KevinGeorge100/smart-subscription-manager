@@ -192,46 +192,12 @@ export default function DashboardPage() {
         setEditingSubscription(null);
     };
 
-    // Render a full-page skeleton until hydration AND initial data load complete.
-    // This prevents child components from receiving undefined subscription data.
-    if (!mounted || isLoading) {
-        return (
-            <div className="space-y-6">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="space-y-2">
-                        <div className="h-8 w-48 rounded-lg bg-muted/30 animate-pulse" />
-                        <div className="h-4 w-64 rounded bg-muted/20 animate-pulse" />
-                    </div>
-                    <div className="h-9 w-36 rounded-md bg-muted/30 animate-pulse" />
-                </div>
-                {/* Stats skeleton */}
-                <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-                    {[1, 2, 3, 4].map((i) => (
-                        <div key={i} className="h-24 rounded-xl bg-muted/30 animate-pulse" />
-                    ))}
-                </div>
-                {/* Charts skeleton */}
-                <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-                    <div className="lg:col-span-2 space-y-6">
-                        <div className="h-72 rounded-xl bg-muted/30 animate-pulse" />
-                        <div className="h-48 rounded-xl bg-muted/20 animate-pulse" />
-                    </div>
-                    <div className="space-y-6">
-                        <div className="h-40 rounded-xl bg-muted/30 animate-pulse" />
-                        <div className="h-40 rounded-xl bg-muted/20 animate-pulse" />
-                        <div className="h-32 rounded-xl bg-muted/20 animate-pulse" />
-                    </div>
-                </div>
-            </div>
-        );
-    }
-
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">
-                        Welcome back, {userData?.firstName || user?.displayName?.split(' ')?.[0] || user?.email?.split('@')?.[0] || 'there'}
+                        Welcome back, {mounted ? (userData?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || '') : '...'}
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
                         Here&apos;s your subscription overview. Stay in control.

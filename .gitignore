@@ -50,3 +50,7 @@ deploy-secrets.ps1
 
 node_modules
 .next
+
+# RuFlo files
+.claude-flow/
+credentials.json
