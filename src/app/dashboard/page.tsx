@@ -211,7 +211,7 @@ export default function DashboardPage() {
                             const emailPrefix = user?.email?.split('@')[0] || '';
                             const authName = user?.displayName;
                             if (authName && authName !== emailPrefix) return authName.split(' ')[0];
-                            return '';
+                            return 'User';
                         })() : '...'}
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">

@@ -130,8 +130,8 @@ export default function SettingsPage() {
         // Fall back to Firebase Auth displayName, but ignore it if it's just the email prefix
         if (user?.displayName && user.displayName !== emailPrefix) return user.displayName;
         
-        // Last resort: email prefix (never shows a UID)
-        return emailPrefix || 'User';
+        // Last resort: Never use email prefix as a name fallback
+        return 'User';
     })();
 
     const avatarInitial = displayName[0]?.toUpperCase() ?? 'U';

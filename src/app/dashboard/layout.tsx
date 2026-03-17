@@ -57,7 +57,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const emailPrefix = user?.email?.split('@')[0] || '';
     const authDisplayName = user?.displayName === emailPrefix ? '' : (user?.displayName || '');
     
-    const displayName = firestoreName || authDisplayName || emailPrefix || 'User';
+    // Never fallback to emailPrefix as requested by user. Should just be User if absolutely nothing exists.
+    const displayName = firestoreName || authDisplayName || 'User';
 
     // Avatar: Firestore photoURL → Firebase Auth photoURL → initials
     const photoURL = userData?.photoURL || user?.photoURL || null;
