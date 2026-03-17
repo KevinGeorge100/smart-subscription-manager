@@ -266,6 +266,12 @@ export async function syncSubscriptions(
         );
 
         if (allEmailTexts.length === 0) {
+            const now = new Date().toISOString();
+            await Promise.allSettled(
+                snapshot.docs.map((doc) =>
+                    doc.ref.update({ lastSyncedAt: now, lastSyncCount: 0 })
+                )
+            );
             return {
                 success: true,
                 added: 0,

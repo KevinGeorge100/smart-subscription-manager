@@ -113,7 +113,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                 </nav>
 
                 {/* User section */}
-                <div className="border-t border-sidebar-border p-4">
+                <div className="border-t border-sidebar-border p-4 mt-auto">
                     <div className="flex items-center gap-3">
                         <div className="h-9 w-9 rounded-full bg-primary/10 text-primary text-sm font-semibold overflow-hidden flex items-center justify-center shrink-0">
                             {photoURL

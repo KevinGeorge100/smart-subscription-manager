@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback, useEffect, Suspense } from 'react';
+import { useState, useMemo, useCallback, useEffect, Suspense, useRef } from 'react';
 import dynamic from 'next/dynamic';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { useUser, useFirestore, useDoc, useMemoFirebase } from '@/firebase';
@@ -121,9 +121,12 @@ export default function DashboardPage() {
         fetchGmailStatus();
     }, [fetchGmailStatus]);
 
+    const isSyncingRef = useRef(false);
+
     // Auto-sync logic
     useEffect(() => {
         if (gmailAccounts.length === 0 || !user?.uid) return;
+        if (isSyncingRef.current) return;
 
         // Find the most recent sync across all accounts
         const syncDates = gmailAccounts
@@ -135,6 +138,7 @@ export default function DashboardPage() {
 
         if (hoursSinceSync >= 24) {
             // Auto-sync triggered (last sync was >= 24h ago)
+            isSyncingRef.current = true;
 
             toast({
                 title: "🔄 Auto-Syncing",
@@ -142,6 +146,7 @@ export default function DashboardPage() {
             });
 
             syncSubscriptions(user.uid).then((res) => {
+                isSyncingRef.current = false;
                 if (res.success) {
                     toast({
                         title: "✅ Data Refreshed",
@@ -149,6 +154,9 @@ export default function DashboardPage() {
                     });
                     fetchGmailStatus();
                 }
+            }).catch((err) => {
+                console.error('Auto-sync error:', err);
+                isSyncingRef.current = false;
             });
         }
     }, [gmailAccounts, user?.uid, toast, fetchGmailStatus]);

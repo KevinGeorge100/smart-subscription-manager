@@ -120,8 +120,14 @@ export default function SettingsPage() {
         // Use the currently-typed form values (most up-to-date)
         const formName = `${firstName} ${lastName}`.trim();
         if (formName) return formName;
+        
+        // Fall back to Firestore data if form is somehow empty but DB has it
+        const dbName = `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim();
+        if (dbName) return dbName;
+
         // Fall back to Firebase Auth displayName (e.g. set by Google OAuth)
         if (user?.displayName) return user.displayName;
+        
         // Last resort: email prefix (never shows a UID)
         return user?.email?.split('@')[0] || 'User';
     })();
