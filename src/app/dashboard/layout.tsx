@@ -51,7 +51,13 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     const firestoreName = userData
         ? `${userData.firstName || ''} ${userData.lastName || ''}`.trim()
         : '';
-    const displayName = firestoreName || user?.displayName || user?.email?.split('@')[0] || 'User';
+        
+    // Firebase Auth sometimes auto-generates displayName from the email prefix.
+    // We want to ignore it if it's just the email prefix so we can use the real Firestore name.
+    const emailPrefix = user?.email?.split('@')[0] || '';
+    const authDisplayName = user?.displayName === emailPrefix ? '' : (user?.displayName || '');
+    
+    const displayName = firestoreName || authDisplayName || emailPrefix || 'User';
 
     // Avatar: Firestore photoURL → Firebase Auth photoURL → initials
     const photoURL = userData?.photoURL || user?.photoURL || null;

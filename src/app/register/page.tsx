@@ -13,6 +13,7 @@ import { useAuth, useUser, useFirestore } from '@/firebase';
 import { setDocumentNonBlocking } from '@/firebase/non-blocking-updates';
 import { initiateEmailSignUp, initiateGoogleSignIn } from '@/firebase/non-blocking-login';
 import { doc } from 'firebase/firestore';
+import { updateProfile } from 'firebase/auth';
 import { useRouter } from 'next/navigation';
 import { useEffect, useRef } from 'react';
 import {
@@ -97,6 +98,11 @@ export default function RegisterPage() {
         email: user.email,
       };
       setDocumentNonBlocking(userRef, userData, { merge: true });
+
+      // Update the Firebase Auth displayName so it shows up immediately in the UI
+      updateProfile(user, {
+        displayName: `${pendingData.current.firstName} ${pendingData.current.lastName}`.trim()
+      }).catch(console.error);
 
       pendingData.current = null;
       userCreationTriggered.current = false;

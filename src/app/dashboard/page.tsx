@@ -205,7 +205,14 @@ export default function DashboardPage() {
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight">
-                        Welcome back, {mounted ? (userData?.firstName || user?.displayName?.split(' ')[0] || user?.email?.split('@')[0] || '') : '...'}
+                        Welcome back, {mounted ? (() => {
+                            const dbName = userData?.firstName;
+                            if (dbName) return dbName;
+                            const emailPrefix = user?.email?.split('@')[0] || '';
+                            const authName = user?.displayName;
+                            if (authName && authName !== emailPrefix) return authName.split(' ')[0];
+                            return '';
+                        })() : '...'}
                     </h1>
                     <p className="text-sm text-muted-foreground mt-1">
                         Here&apos;s your subscription overview. Stay in control.

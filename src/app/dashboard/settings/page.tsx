@@ -125,11 +125,13 @@ export default function SettingsPage() {
         const dbName = `${userData?.firstName || ''} ${userData?.lastName || ''}`.trim();
         if (dbName) return dbName;
 
-        // Fall back to Firebase Auth displayName (e.g. set by Google OAuth)
-        if (user?.displayName) return user.displayName;
+        const emailPrefix = user?.email?.split('@')[0] || '';
+        
+        // Fall back to Firebase Auth displayName, but ignore it if it's just the email prefix
+        if (user?.displayName && user.displayName !== emailPrefix) return user.displayName;
         
         // Last resort: email prefix (never shows a UID)
-        return user?.email?.split('@')[0] || 'User';
+        return emailPrefix || 'User';
     })();
 
     const avatarInitial = displayName[0]?.toUpperCase() ?? 'U';
