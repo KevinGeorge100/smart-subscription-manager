@@ -9,29 +9,7 @@ export const dynamic = 'force-dynamic';
 
 const REMINDER_WINDOW_DAYS = 7; // Send reminders for subscriptions renewing in the next 7 days
 
-/**
- * Configures and returns a nodemailer transporter for sending emails.
- * It reads SMTP configuration from environment variables.
- */
-function getEmailTransporter() {
-    const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
-
-    if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-        console.warn("SMTP environment variables not fully configured. Email sending will be disabled.");
-        return null;
-    }
-
-    return nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: Number(SMTP_PORT),
-        secure: Number(SMTP_PORT) === 465, // Use SSL for port 465
-        auth: {
-            user: SMTP_USER,
-            pass: SMTP_PASS,
-        },
-    });
-}
-
+import { getEmailTransporter } from '@/lib/email';
 /**
  * Generates the HTML content for a reminder email.
  */
