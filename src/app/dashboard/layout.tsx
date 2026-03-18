@@ -1,7 +1,6 @@
 'use client';
 
 import { useUser, useFirebase, useDoc, useMemoFirebase } from '@/firebase';
-import Image from 'next/image';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState, type ReactNode } from 'react';
 import { doc } from 'firebase/firestore';
@@ -15,8 +14,22 @@ import {
     LogOut,
     Menu,
     Settings,
+    UserCog,
     X,
 } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+    Avatar,
+    AvatarFallback,
+    AvatarImage,
+} from '@/components/ui/avatar';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { SubZeroLogo } from '@/components/ui/logo';
@@ -121,27 +134,48 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
 
                 {/* User section */}
                 <div className="border-t border-sidebar-border p-4 mt-auto">
-                    <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-primary/10 text-primary text-sm font-semibold overflow-hidden flex items-center justify-center shrink-0">
-                            {photoURL
-                                ? <Image src={photoURL} alt={displayName} width={36} height={36} className="h-full w-full object-cover" unoptimized />
-                                : avatarInitial
-                            }
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{displayName}</p>
-                            <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                        </div>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={handleSignOut}
-                            className="h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
-                            aria-label="Sign out"
-                        >
-                            <LogOut className="h-4 w-4" />
-                        </Button>
-                    </div>
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex w-full items-center gap-3 p-2 rounded-xl border border-transparent hover:bg-sidebar-accent hover:border-sidebar-border transition-all duration-200 text-left outline-none group">
+                                <Avatar className="h-9 w-9 border border-sidebar-border group-hover:border-primary/20 transition-colors">
+                                    <AvatarImage src={photoURL || ''} alt={displayName} className="object-cover" />
+                                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                                        {avatarInitial}
+                                    </AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-sm font-semibold truncate group-hover:text-primary transition-colors">{displayName}</p>
+                                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                                </div>
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" side="right" className="w-56 mb-2">
+                            <DropdownMenuLabel className="font-normal">
+                                <div className="flex flex-col space-y-1">
+                                    <p className="text-sm font-medium leading-none">{displayName}</p>
+                                    <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                                </div>
+                            </DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <Link href="/dashboard/settings">
+                                <DropdownMenuItem className="cursor-pointer">
+                                    <UserCog className="mr-2 h-4 w-4" />
+                                    <span>Edit Profile</span>
+                                </DropdownMenuItem>
+                            </Link>
+                            <Link href="/dashboard/settings">
+                                <DropdownMenuItem className="cursor-pointer">
+                                    <Settings className="mr-2 h-4 w-4" />
+                                    <span>Account Settings</span>
+                                </DropdownMenuItem>
+                            </Link>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onClick={handleSignOut} className="text-red-400 focus:text-red-400 cursor-pointer">
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Sign out</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
             </aside>
 
@@ -196,22 +230,50 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                     >
                         <Menu className="h-5 w-5" />
                     </Button>
-                    <div className="flex-1" />
                     <div className="flex items-center gap-3">
                         <ThemeToggle />
                         <NotificationCenter />
-                        <span className="hidden sm:inline text-sm text-muted-foreground">
-                            {displayName}
-                        </span>
-                        <Button
-                            onClick={handleSignOut}
-                            variant="outline"
-                            size="sm"
-                            className="lg:hidden"
-                        >
-                            <LogOut className="h-4 w-4 mr-1.5" />
-                            Sign Out
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button className="flex items-center gap-2 hover:opacity-80 transition-opacity focus:outline-none">
+                                    <span className="hidden sm:inline text-sm font-medium text-muted-foreground">
+                                        {displayName}
+                                    </span>
+                                    <Avatar className="h-8 w-8 border border-border/50">
+                                        <AvatarImage src={photoURL || ''} alt={displayName} className="object-cover" />
+                                        <AvatarFallback className="bg-primary/10 text-primary text-[10px] font-semibold">
+                                            {avatarInitial}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 mt-2">
+                                <DropdownMenuLabel className="font-normal lg:hidden">
+                                    <div className="flex flex-col space-y-1">
+                                        <p className="text-sm font-medium leading-none">{displayName}</p>
+                                        <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator className="lg:hidden" />
+                                <Link href="/dashboard/settings">
+                                    <DropdownMenuItem className="cursor-pointer">
+                                        <UserCog className="mr-2 h-4 w-4" />
+                                        <span>Edit Profile</span>
+                                    </DropdownMenuItem>
+                                </Link>
+                                <Link href="/dashboard/settings">
+                                    <DropdownMenuItem className="cursor-pointer">
+                                        <Settings className="mr-2 h-4 w-4" />
+                                        <span>Account Settings</span>
+                                    </DropdownMenuItem>
+                                </Link>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleSignOut} className="text-red-400 focus:text-red-400 cursor-pointer">
+                                    <LogOut className="mr-2 h-4 w-4" />
+                                    <span>Sign out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </header>
 
