@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase-admin';
-import * as nodemailer from 'nodemailer';
+import { getEmailTransporter } from '@/lib/email';
 import { Timestamp } from 'firebase-admin/firestore';
 import { type User as UserAccount, type Subscription } from '@/types';
 import { add, format, differenceInDays } from 'date-fns';
@@ -9,7 +9,6 @@ export const dynamic = 'force-dynamic';
 
 const REMINDER_WINDOW_DAYS = 7; // Send reminders for subscriptions renewing in the next 7 days
 
-import { getEmailTransporter } from '@/lib/email';
 /**
  * Generates the HTML content for a reminder email.
  */
