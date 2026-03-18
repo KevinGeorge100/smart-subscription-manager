@@ -157,18 +157,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                                 </div>
                             </DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <Link href="/dashboard/settings">
-                                <DropdownMenuItem className="cursor-pointer">
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link href="/dashboard/settings?tab=profile">
                                     <UserCog className="mr-2 h-4 w-4" />
                                     <span>Edit Profile</span>
-                                </DropdownMenuItem>
-                            </Link>
-                            <Link href="/dashboard/settings">
-                                <DropdownMenuItem className="cursor-pointer">
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link href="/dashboard/settings?tab=security">
                                     <Settings className="mr-2 h-4 w-4" />
                                     <span>Account Settings</span>
-                                </DropdownMenuItem>
-                            </Link>
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onClick={handleSignOut} className="text-red-400 focus:text-red-400 cursor-pointer">
                                 <LogOut className="mr-2 h-4 w-4" />
@@ -255,18 +255,18 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="lg:hidden" />
-                                <Link href="/dashboard/settings">
-                                    <DropdownMenuItem className="cursor-pointer">
+                                <DropdownMenuItem asChild className="cursor-pointer">
+                                    <Link href="/dashboard/settings?tab=profile">
                                         <UserCog className="mr-2 h-4 w-4" />
                                         <span>Edit Profile</span>
-                                    </DropdownMenuItem>
-                                </Link>
-                                <Link href="/dashboard/settings">
-                                    <DropdownMenuItem className="cursor-pointer">
+                                    </Link>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem asChild className="cursor-pointer">
+                                    <Link href="/dashboard/settings?tab=security">
                                         <Settings className="mr-2 h-4 w-4" />
                                         <span>Account Settings</span>
-                                    </DropdownMenuItem>
-                                </Link>
+                                    </Link>
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem onClick={handleSignOut} className="text-red-400 focus:text-red-400 cursor-pointer">
                                     <LogOut className="mr-2 h-4 w-4" />

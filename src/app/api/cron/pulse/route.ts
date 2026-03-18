@@ -14,16 +14,23 @@ function generatePulseEmailHTML(
     totalMonthlySpend: number,
     renewingThisMonth: Subscription[]
 ): string {
+    const toDate = (date: any): Date => {
+        if (!date) return new Date();
+        if (date instanceof Date) return date;
+        if (typeof date.toDate === 'function') return date.toDate();
+        return new Date(date);
+    };
+
     const formatINR = (amount: number) =>
         new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(amount);
 
     const subscriptionsHtml = renewingThisMonth
-        .sort((a, b) => (a.renewalDate as any).toDate().getTime() - (b.renewalDate as any).toDate().getTime())
+        .sort((a, b) => toDate(a.renewalDate).getTime() - toDate(b.renewalDate).getTime())
         .map(sub => `
         <tr style="border-bottom: 1px solid #232328;">
             <td style="padding: 12px 0;">
                 <strong style="color: #ffffff; font-size: 14px;">${sub.name}</strong><br>
-                <span style="color: #888891; font-size: 12px;">${format((sub.renewalDate as any).toDate(), 'MMM do, yyyy')}</span>
+                <span style="color: #888891; font-size: 12px;">${format(toDate(sub.renewalDate), 'MMM do, yyyy')}</span>
             </td>
             <td style="padding: 12px 0; text-align: right; color: #ffffff; font-weight: 500;">
                 ${formatINR(sub.amount)}
@@ -141,7 +148,12 @@ export async function GET(request: Request) {
 
                 // Check if renewal falls within this calendar month
                 if (sub.renewalDate) {
-                   const date = (sub.renewalDate as any).toDate();
+                   const toDate = (date: any): Date => {
+                       if (date instanceof Date) return date;
+                       if (typeof date.toDate === 'function') return date.toDate();
+                       return new Date(date);
+                   };
+                   const date = toDate(sub.renewalDate);
                    if (date >= currentMonthStart && date <= currentMonthEnd) {
                        renewingThisMonth.push(sub);
                    }

@@ -13,13 +13,22 @@ const REMINDER_WINDOW_DAYS = 7; // Send reminders for subscriptions renewing in 
  * Generates the HTML content for a reminder email.
  */
 function generateReminderEmailHTML(user: UserAccount, subscriptions: Subscription[]): string {
-    const subscriptionsHtml = subscriptions.map(sub => `
+    const toDate = (date: any): Date => {
+        if (!date) return new Date();
+        if (date instanceof Date) return date;
+        if (typeof date.toDate === 'function') return date.toDate();
+        return new Date(date);
+    };
+
+    const subscriptionsHtml = subscriptions.map(sub => {
+        const date = toDate(sub.renewalDate);
+        return `
         <li style="margin-bottom: 15px; padding: 10px; border: 1px solid #eee; border-radius: 5px;">
             <strong style="font-size: 1.1em;">${sub.name}</strong><br>
             Amount: ${new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(sub.amount)}<br>
-            Renews on: ${format((sub.renewalDate as any).toDate(), 'PPP')} (${differenceInDays((sub.renewalDate as any).toDate(), new Date())} days)
+            Renews on: ${format(date, 'PPP')} (${differenceInDays(date, new Date())} days)
         </li>
-    `).join('');
+    `;}).join('');
 
     return `
         <div style="font-family: Arial, sans-serif; color: #333;">

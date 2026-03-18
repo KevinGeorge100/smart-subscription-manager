@@ -39,16 +39,28 @@ import {
     AlertTriangle,
 } from 'lucide-react';
 import { signOut } from 'firebase/auth';
-import { useRouter } from 'next/navigation';
 import { updateNotificationSettings, updateProfile, deleteAccount } from '@/actions/settings';
 import { useToast } from '@/hooks/use-toast';
+import { useSearchParams } from 'next/navigation';
+import { Suspense } from 'react';
 
-export default function SettingsPage() {
+function SettingsContent() {
     const { user } = useUser();
     const { auth, firestore, storage } = useFirebase();
     const { toast } = useToast();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Get active tab from URL param, default to 'profile'
+    const [activeTab, setActiveTab] = useState('profile');
+
+    useEffect(() => {
+        const tab = searchParams.get('tab');
+        if (tab && ['profile', 'security', 'notifications'].includes(tab)) {
+            setActiveTab(tab);
+        }
+    }, [searchParams]);
 
     const userDocRef = useMemoFirebase(
         () => (user && firestore ? doc(firestore, 'users', user.uid) : null),
@@ -254,7 +266,11 @@ export default function SettingsPage() {
                 </p>
             </div>
 
-            <Tabs defaultValue="profile" className="space-y-6">
+            <Tabs 
+                value={activeTab} 
+                onValueChange={setActiveTab} 
+                className="space-y-6"
+            >
                 <div className="flex flex-col md:flex-row gap-6">
                     {/* Navigation Sidebar */}
                     <TabsList className="flex md:flex-col h-auto bg-transparent border-none p-0 gap-1 md:w-56 shrink-0">
@@ -596,5 +612,17 @@ export default function SettingsPage() {
                 </div>
             </Tabs>
         </div>
+    );
+}
+
+export default function SettingsPage() {
+    return (
+        <Suspense fallback={
+            <div className="flex h-64 items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+        }>
+            <SettingsContent />
+        </Suspense>
     );
 }
