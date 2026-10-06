@@ -11,7 +11,7 @@ import React, {
 } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Firestore } from 'firebase/firestore';
-import { Auth, User, onAuthStateChanged } from 'firebase/auth';
+import { Auth, User, onIdTokenChanged } from 'firebase/auth';
 import { FirebaseStorage } from 'firebase/storage';
 
 import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
@@ -86,10 +86,22 @@ export const FirebaseProvider = ({
   });
 
   useEffect(() => {
-    // Use the `auth` instance passed via props to listen for state changes.
-    const unsubscribe = onAuthStateChanged(
+    // Use onIdTokenChanged to listen for state changes and maintain __session cookie
+    const unsubscribe = onIdTokenChanged(
       auth,
-      (firebaseUser) => {
+      async (firebaseUser) => {
+        if (typeof document !== 'undefined') {
+          if (firebaseUser) {
+            try {
+              const token = await firebaseUser.getIdToken();
+              document.cookie = `__session=${token}; path=/; max-age=3600; SameSite=Lax; Secure`;
+            } catch {
+              // ignore cookie sync errors
+            }
+          } else {
+            document.cookie = '__session=; path=/; max-age=0; SameSite=Lax; Secure';
+          }
+        }
         setUserAuthState({
           user: firebaseUser,
           isUserLoading: false,
@@ -97,6 +109,9 @@ export const FirebaseProvider = ({
         });
       },
       (error) => {
+        if (typeof document !== 'undefined') {
+          document.cookie = '__session=; path=/; max-age=0; SameSite=Lax; Secure';
+        }
         console.error('Firebase auth listener error:', error);
         setUserAuthState({
           user: null,

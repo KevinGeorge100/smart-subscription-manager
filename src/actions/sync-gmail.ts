@@ -20,6 +20,7 @@ import { extractSub } from '@/lib/genkit/parser';
 import { addSubscription } from './subscriptions';
 import { revalidatePath } from 'next/cache';
 import type { Category } from '@/types';
+import { verifyAuth } from '@/lib/auth';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -120,29 +121,32 @@ function extractPlainText(
  */
 export async function syncGmail(
     userId: string,
-    afterTimestamp?: Date
+    afterTimestamp?: Date,
+    idToken?: string
 ): Promise<SyncGmailResult> {
-    if (!userId) {
-        return { success: false, added: 0, scanned: 0, accountsScanned: 0, error: 'No userId provided.' };
-    }
+    try {
+        const { uid: authUid } = await verifyAuth(idToken);
+        if (userId && userId !== authUid) {
+            return { success: false, added: 0, scanned: 0, accountsScanned: 0, error: 'Forbidden: Cannot sync another user subscriptions' };
+        }
 
-    const db = getFirestoreAdmin();
+        const db = getFirestoreAdmin();
 
-    // Load all connected Gmail accounts for this user
-    const emailsSnap = await db
-        .collection('users').doc(userId)
-        .collection('connectedEmails')
-        .get();
+        // Load all connected Gmail accounts for this user
+        const emailsSnap = await db
+            .collection('users').doc(authUid)
+            .collection('connectedEmails')
+            .get();
 
-    if (emailsSnap.empty) {
-        return {
-            success: false,
-            added: 0,
-            scanned: 0,
-            accountsScanned: 0,
-            error: 'No Gmail accounts connected. Please connect a Gmail account first.',
-        };
-    }
+        if (emailsSnap.empty) {
+            return {
+                success: false,
+                added: 0,
+                scanned: 0,
+                accountsScanned: 0,
+                error: 'No Gmail accounts connected. Please connect a Gmail account first.',
+            };
+        }
 
     let totalScanned = 0;
     let totalAdded = 0;
@@ -161,7 +165,7 @@ export async function syncGmail(
             };
 
             try {
-                const auth = buildOAuthClient(userId, accountDoc.id, encryptedTokens);
+                const auth = buildOAuthClient(authUid, accountDoc.id, encryptedTokens);
                 const gmail = google.gmail({ version: 'v1', auth });
 
                 // ── Fetch up to 10 invoice / receipt emails ────────────────
@@ -206,7 +210,7 @@ export async function syncGmail(
 
                         // ── Persist to Firestore ───────────────────────────
                         const result = await addSubscription(
-                            userId,
+                            authUid,
                             {
                                 name: extracted.name,
                                 amount: extracted.amount,
@@ -215,7 +219,8 @@ export async function syncGmail(
                                 category: 'Others' as Category,
                                 renewalDate: new Date(extracted.renewalDate),
                             },
-                            'ai-detected'
+                            'ai-detected',
+                            idToken
                         );
 
                         if (result.success) totalAdded++;
@@ -241,4 +246,14 @@ export async function syncGmail(
         scanned: totalScanned,
         accountsScanned: emailsSnap.size,
     };
+    } catch (error: any) {
+        console.error('[syncGmail]', error);
+        return {
+            success: false,
+            added: 0,
+            scanned: 0,
+            accountsScanned: 0,
+            error: error?.message || 'Failed to sync Gmail',
+        };
+    }
 }

@@ -12,26 +12,20 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthAdmin, getFirestoreAdmin } from '@/lib/firebase-admin';
+import { getFirestoreAdmin } from '@/lib/firebase-admin';
 import { askSubZero, type SubscriptionContext } from '@/lib/genkit/flows/chat';
+import { verifyRequestAuth } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
     // ── 1. Authenticate via Firebase ID Token ──────────────────────────────────
-    const authHeader = request.headers.get('authorization');
-    const idToken = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-
-    if (!idToken) {
-        return NextResponse.json({ error: 'Missing authorization header.' }, { status: 401 });
-    }
-
     let uid: string;
     try {
-        const decoded = await getAuthAdmin().verifyIdToken(idToken);
-        uid = decoded.uid;
+        const authUser = await verifyRequestAuth(request);
+        uid = authUser.uid;
     } catch {
-        return NextResponse.json({ error: 'Invalid or expired ID token.' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized: Invalid or expired ID token.' }, { status: 401 });
     }
 
     // ── 2. Parse and validate request body ────────────────────────────────────

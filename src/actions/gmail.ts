@@ -14,6 +14,7 @@ import { google } from 'googleapis';
 import { detectSubscriptions } from '@/lib/genkit/flows/detect-subscriptions';
 import { addSubscription } from './subscriptions';
 import { revalidatePath } from 'next/cache';
+import { verifyAuth } from '@/lib/auth';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -195,14 +196,20 @@ async function scanGmailAccount(
 /**
  * Returns all Gmail accounts connected by this user.
  */
-export async function getGmailConnectionStatus(userId: string): Promise<{
+export async function getGmailConnectionStatus(userId: string, idToken?: string): Promise<{
     connected: boolean;
     accounts: ConnectedEmail[];
+    error?: string;
 }> {
     try {
+        const { uid: authUid } = await verifyAuth(idToken);
+        if (userId && userId !== authUid) {
+            return { connected: false, accounts: [], error: 'Forbidden: Cannot access another user Gmail status' };
+        }
+
         const db = getFirestoreAdmin();
         const snapshot = await db
-            .collection('users').doc(userId)
+            .collection('users').doc(authUid)
             .collection('connectedEmails')
             .orderBy('connectedAt', 'asc')
             .get();
@@ -218,9 +225,9 @@ export async function getGmailConnectionStatus(userId: string): Promise<{
         }));
 
         return { connected: true, accounts };
-    } catch (error) {
+    } catch (error: any) {
         console.error('[getGmailConnectionStatus]', error);
-        return { connected: false, accounts: [] };
+        return { connected: false, accounts: [], error: error?.message };
     }
 }
 
@@ -230,7 +237,8 @@ export async function getGmailConnectionStatus(userId: string): Promise<{
  */
 export async function syncSubscriptions(
     userId: string,
-    timeframe: string = '30d'
+    timeframe: string = '30d',
+    idToken?: string
 ): Promise<{
     success: boolean;
     added?: number;
@@ -239,9 +247,14 @@ export async function syncSubscriptions(
     error?: string;
 }> {
     try {
+        const { uid: authUid } = await verifyAuth(idToken);
+        if (userId && userId !== authUid) {
+            return { success: false, error: 'Forbidden: Cannot sync another user subscriptions' };
+        }
+
         const db = getFirestoreAdmin();
         const snapshot = await db
-            .collection('users').doc(userId)
+            .collection('users').doc(authUid)
             .collection('connectedEmails')
             .get();
 
@@ -259,7 +272,7 @@ export async function syncSubscriptions(
                     encryptedTokens: string;
                 };
 
-                const gmail = await buildGmailClientFromDoc(userId, doc.id, encryptedTokens);
+                const gmail = await buildGmailClientFromDoc(authUid, doc.id, encryptedTokens);
                 const texts = await scanGmailAccount(gmail, email, timeframe);
                 allEmailTexts.push(...texts);
             })
@@ -286,7 +299,7 @@ export async function syncSubscriptions(
         // ── Save each detected subscription (with deduplication) ───────────────
         // Fetch existing subscription names to avoid adding duplicates
         const existingSnap = await db
-            .collection('users').doc(userId)
+            .collection('users').doc(authUid)
             .collection('subscriptions')
             .get();
 
@@ -312,7 +325,7 @@ export async function syncSubscriptions(
             if (sub.sourceEmailId && existingEmailIds.has(sub.sourceEmailId)) continue;
 
             const result = await addSubscription(
-                userId,
+                authUid,
                 {
                     name: sub.name,
                     amount: sub.amount,
@@ -321,7 +334,8 @@ export async function syncSubscriptions(
                     renewalDate: sub.renewalDate,
                     sourceEmailId: sub.sourceEmailId,
                 },
-                'ai-detected'
+                'ai-detected',
+                idToken
             );
             if (result.success) {
                 added++;
@@ -358,12 +372,18 @@ export async function syncSubscriptions(
  */
 export async function disconnectGmail(
     userId: string,
-    accountId: string
+    accountId: string,
+    idToken?: string
 ): Promise<{ success: boolean; error?: string }> {
     try {
+        const { uid: authUid } = await verifyAuth(idToken);
+        if (userId && userId !== authUid) {
+            return { success: false, error: 'Forbidden: Cannot disconnect another user account' };
+        }
+
         const db = getFirestoreAdmin();
         await db
-            .collection('users').doc(userId)
+            .collection('users').doc(authUid)
             .collection('connectedEmails').doc(accountId)
             .delete();
 

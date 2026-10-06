@@ -180,7 +180,8 @@ function SettingsContent() {
         if (!user || !firstName.trim()) return;
         setProfileSaving(true);
         try {
-            const result = await updateProfile(user.uid, { firstName, lastName, photoURL });
+            const idToken = await user.getIdToken();
+            const result = await updateProfile(user.uid, { firstName, lastName, photoURL }, idToken);
             if (result.success) {
                 toast({ title: '✅ Profile updated', description: 'Your name and photo have been saved.' });
             } else {
@@ -231,10 +232,16 @@ function SettingsContent() {
         if (!user) return;
         const newSettings = { ...notifSettings, [type]: checked };
         setNotifSettings(newSettings);
-        const result = await updateNotificationSettings(user.uid, newSettings);
-        if (result.success) {
-            toast({ title: 'Settings Updated', description: `${type === 'email' ? 'Email' : 'Dashboard'} alerts ${checked ? 'enabled' : 'disabled'}.` });
-        } else {
+        try {
+            const idToken = await user.getIdToken();
+            const result = await updateNotificationSettings(user.uid, newSettings, idToken);
+            if (result.success) {
+                toast({ title: 'Settings Updated', description: `${type === 'email' ? 'Email' : 'Dashboard'} alerts ${checked ? 'enabled' : 'disabled'}.` });
+            } else {
+                setNotifSettings(notifSettings);
+                toast({ title: 'Error', description: 'Failed to update.', variant: 'destructive' });
+            }
+        } catch {
             setNotifSettings(notifSettings);
             toast({ title: 'Error', description: 'Failed to update.', variant: 'destructive' });
         }
@@ -248,12 +255,17 @@ function SettingsContent() {
     // ── Delete account ────────────────────────────────────────────────────────
     const handleDeleteAccount = async () => {
         if (!user) return;
-        const result = await deleteAccount(user.uid);
-        if (result.success) {
-            if (auth) await signOut(auth);
-            router.push('/');
-        } else {
-            toast({ title: 'Error', description: result.error, variant: 'destructive' });
+        try {
+            const idToken = await user.getIdToken();
+            const result = await deleteAccount(user.uid, idToken);
+            if (result.success) {
+                if (auth) await signOut(auth);
+                router.push('/');
+            } else {
+                toast({ title: 'Error', description: result.error, variant: 'destructive' });
+            }
+        } catch (err: unknown) {
+            toast({ title: 'Error', description: err instanceof Error ? err.message : 'Failed to delete account.', variant: 'destructive' });
         }
     };
 
