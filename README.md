@@ -92,7 +92,21 @@ Open [http://localhost:9002](http://localhost:9002) (Port 9002 is specified in `
 
 ---
 
+## Containerized Deployment
+
+The multi-stage Docker build creates a Next.js standalone image on Node 20. Supply the public client configuration at build time (these values are embedded in browser assets): `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, and `NEXT_PUBLIC_APP_URL`.
+
+```bash
+docker build -t subzero --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=... --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=... --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=... --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=... --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=... --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=... --build-arg NEXT_PUBLIC_APP_URL=http://localhost:3000 .
+docker run --env-file .env.local -p 3000:3000 subzero
+```
+
+For local Compose use, put the public variables and runtime variables in `.env.local`, then run `docker compose --env-file .env.local build` and `docker compose --env-file .env.local up`. Compose uses the file for build argument substitution and injects it at runtime. Never pass server secrets as build arguments: `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_GENAI_API_KEY`/`GEMINI_API_KEY`, `SMTP_PASS`, `ENCRYPTION_KEY`, and `CRON_SECRET` belong only in runtime configuration. The container does not include `.env.local`.
+
+`GET /api/health` returns 200 when the process is alive. `GET /api/ready` returns 200 when Firebase Admin's required runtime variables are present, or 503 with missing variable names. Readiness does not contact external services; Gmail, Gemini, SMTP, and cron configuration is feature-specific. Vercel remains the primary deployment target, including its scheduled cron configuration.
+
 ## 📚 Documentation
+
 Looking for the academic summary and methodology? Read the **[Project Abstract](./docs/ABSTRACT.md)**.
 
 *This project was developed adhering to S6 academic standards for software architecture and autonomous agent design.*
