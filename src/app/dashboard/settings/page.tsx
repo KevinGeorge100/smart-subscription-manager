@@ -41,7 +41,7 @@ import {
 import { signOut } from 'firebase/auth';
 import { updateNotificationSettings, updateProfile, deleteAccount } from '@/actions/settings';
 import { useToast } from '@/hooks/use-toast';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Suspense } from 'react';
 
 function SettingsContent() {
