@@ -10,6 +10,8 @@
   ![React](https://img.shields.io/badge/React-19-blue?logo=react&logoColor=white)
   ![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%2B%20Auth-FFCA28?logo=firebase&logoColor=black)
   ![Genkit](https://img.shields.io/badge/AI-Google%20Genkit%20%2B%20Gemini-4285F4?logo=google&logoColor=white)
+  [![CI](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/ci.yml)
+  [![CodeQL](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/codeql.yml)
 
   <br />
   
