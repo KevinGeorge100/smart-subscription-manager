@@ -4,6 +4,7 @@ import { getEmailTransporter } from '@/lib/email';
 import { Timestamp } from 'firebase-admin/firestore';
 import { type User as UserAccount, type Subscription } from '@/types';
 import { add, format, differenceInDays } from 'date-fns';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -47,16 +48,17 @@ function generateReminderEmailHTML(user: UserAccount, subscriptions: Subscriptio
 
 
 export async function GET(request: Request) {
-    // 1. Authenticate the cron job request
-    const { searchParams } = new URL(request.url);
-    const secret = searchParams.get('secret');
-
-    if (secret !== process.env.CRON_SECRET) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // 1. Authenticate the cron job request via Bearer token
+    const auth = verifyCronAuth(request);
+    if (!auth.isAuthorized) {
+        return auth.errorResponse!;
     }
+
+    console.log('[cron:reminders] Job started');
 
     const transporter = getEmailTransporter();
     if (!transporter) {
+        console.error('[cron:reminders] Email service not configured');
         return NextResponse.json({ success: false, message: "Email service not configured." }, { status: 500 });
     }
 
@@ -73,6 +75,7 @@ export async function GET(request: Request) {
             .get();
 
         if (snapshot.empty) {
+            console.log('[cron:reminders] Job completed: No upcoming renewals to process');
             return NextResponse.json({ success: true, message: 'No upcoming renewals to process.' });
         }
 
@@ -92,6 +95,7 @@ export async function GET(request: Request) {
         });
 
         if (subsToRemind.length === 0) {
+            console.log('[cron:reminders] Job completed: No new reminders to send');
             return NextResponse.json({ success: true, message: 'No new reminders to send.' });
         }
 
@@ -159,10 +163,11 @@ export async function GET(request: Request) {
             await batch.commit();
         }
 
+        console.log(`[cron:reminders] Job completed: Sent ${emailsSent} reminder email(s) across ${Object.keys(subsByUserId).length} user(s)`);
         return NextResponse.json({ success: true, message: `Sent ${emailsSent} reminder emails.` });
 
     } catch (error: any) {
-        console.error('Cron job failed:', error);
+        console.error('[cron:reminders] Job failed:', error?.message || error);
         // This is where you might integrate with a logging/monitoring service
         if (error.code === 'failed-precondition') {
             return NextResponse.json({

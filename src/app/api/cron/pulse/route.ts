@@ -3,6 +3,7 @@ import { adminDb } from '@/lib/firebase-admin';
 import { getEmailTransporter } from '@/lib/email';
 import { type User as UserAccount, type Subscription } from '@/types';
 import { format, differenceInDays, startOfMonth, endOfMonth } from 'date-fns';
+import { verifyCronAuth } from '@/lib/cron-auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -92,22 +93,24 @@ function generatePulseEmailHTML(
 }
 
 export async function GET(request: Request) {
-    // 1. Authenticate the cron job request
-    const { searchParams } = new URL(request.url);
-    const secret = searchParams.get('secret');
-
-    if (secret !== process.env.CRON_SECRET) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    // 1. Authenticate the cron job request via Bearer token
+    const auth = verifyCronAuth(request);
+    if (!auth.isAuthorized) {
+        return auth.errorResponse!;
     }
+
+    console.log('[cron:pulse] Job started');
 
     const transporter = getEmailTransporter();
     if (!transporter) {
+        console.error('[cron:pulse] Email service not configured');
         return NextResponse.json({ success: false, message: "Email service not configured." }, { status: 500 });
     }
 
     try {
         const usersSnapshot = await adminDb.collection('users').get();
         if (usersSnapshot.empty) {
+            console.log('[cron:pulse] Job completed: No users found');
             return NextResponse.json({ success: true, message: 'No users found.' });
         }
 
@@ -170,10 +173,11 @@ export async function GET(request: Request) {
             emailsSent++;
         }
 
+        console.log(`[cron:pulse] Job completed: Scanned ${usersSnapshot.size} user(s), sent ${emailsSent} monthly pulse email(s)`);
         return NextResponse.json({ success: true, message: `Sent ${emailsSent} Monthly Pulse emails.` });
 
     } catch (error: any) {
-        console.error('Pulse Cron job failed:', error);
+        console.error('[cron:pulse] Job failed:', error?.message || error);
         return NextResponse.json({ success: false, message: 'An internal error occurred.' }, { status: 500 });
     }
 }
