@@ -15,17 +15,23 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getFirestoreAdmin } from '@/lib/firebase-admin';
 import { askSubZero, type SubscriptionContext } from '@/lib/genkit/flows/chat';
 import { verifyRequestAuth } from '@/lib/auth';
+import { durationMs, logger, requestIdFor, safeError } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(request: NextRequest) {
+    const requestId = requestIdFor(request);
+    const startedAt = performance.now();
+    const reply = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'X-Request-ID': requestId } });
+    logger.info('ai', 'ai_request_started', requestId, { endpoint: 'chat' });
     // ── 1. Authenticate via Firebase ID Token ──────────────────────────────────
     let uid: string;
     try {
         const authUser = await verifyRequestAuth(request);
         uid = authUser.uid;
     } catch {
-        return NextResponse.json({ error: 'Unauthorized: Invalid or expired ID token.' }, { status: 401 });
+        logger.warn('ai', 'authentication_failed', requestId, { endpoint: 'chat', authenticated: false });
+        return reply({ error: 'Unauthorized: Invalid or expired ID token.' }, 401);
     }
 
     // ── 2. Parse and validate request body ────────────────────────────────────
@@ -34,17 +40,15 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
         query = typeof body?.query === 'string' ? body.query.trim() : '';
     } catch {
-        return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
+        return reply({ error: 'Invalid JSON body.' }, 400);
     }
 
     if (!query || query.length > 500) {
-        return NextResponse.json(
-            { error: 'Query must be between 1 and 500 characters.' },
-            { status: 400 }
-        );
+        return reply({ error: 'Query must be between 1 and 500 characters.' }, 400);
     }
 
     // ── 3. Fetch lean subscription context from Firestore ─────────────────────
+    try {
     const db = getFirestoreAdmin();
     const subsSnapshot = await db
         .collection('users')
@@ -63,14 +67,11 @@ export async function POST(request: NextRequest) {
     });
 
     // ── 4. Run the Genkit AI flow ──────────────────────────────────────────────
-    try {
         const result = await askSubZero(query, subscriptions);
-        return NextResponse.json(result);
+        logger.info('ai', 'ai_request_completed', requestId, { endpoint: 'chat', authenticated: true, durationMs: durationMs(startedAt) });
+        return reply(result);
     } catch (error) {
-        console.error('[/api/chat] askSubZero flow error:', error);
-        return NextResponse.json(
-            { error: 'AI service encountered an error. Please try again.' },
-            { status: 500 }
-        );
+        logger.error('ai', 'ai_request_failed', requestId, { endpoint: 'chat', authenticated: true, durationMs: durationMs(startedAt), ...safeError(error) });
+        return reply({ error: 'AI service encountered an error. Please try again.' }, 500);
     }
 }

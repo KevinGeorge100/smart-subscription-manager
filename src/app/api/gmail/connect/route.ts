@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { logger, requestIdFor, safeError } from '@/lib/logger';
 
 /**
  * Resolves the OAuth2 redirect URI.
@@ -44,11 +45,12 @@ function getOAuth2Client(redirectUri: string) {
 }
 
 export async function GET(request: NextRequest) {
+    const requestId = requestIdFor(request);
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
     if (!userId) {
-        return NextResponse.json({ error: 'Missing userId parameter.' }, { status: 400 });
+        return NextResponse.json({ error: 'Missing userId parameter.' }, { status: 400, headers: { 'X-Request-ID': requestId } });
     }
 
     try {
@@ -68,12 +70,14 @@ export async function GET(request: NextRequest) {
             state: userId,             // Echoed back in callback — used to resolve Firestore user
         });
 
-        return NextResponse.redirect(authUrl);
+        const response = NextResponse.redirect(authUrl);
+        response.headers.set('X-Request-ID', requestId);
+        return response;
     } catch (error) {
-        console.error('[/api/gmail/connect]', error);
+        logger.error('gmail', 'gmail_oauth_failed', requestId, { operation: 'connect', ...safeError(error) });
         return NextResponse.json(
             { error: 'Failed to initiate Gmail OAuth flow. Check server env vars.' },
-            { status: 500 }
+            { status: 500, headers: { 'X-Request-ID': requestId } }
         );
     }
 }

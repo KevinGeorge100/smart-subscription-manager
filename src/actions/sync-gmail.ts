@@ -21,6 +21,7 @@ import { addSubscription } from './subscriptions';
 import { revalidatePath } from 'next/cache';
 import type { Category } from '@/types';
 import { verifyAuth } from '@/lib/auth';
+import { logger, safeError } from '@/lib/logger';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -233,7 +234,7 @@ export async function syncGmail(
                     lastSyncCount: totalAdded,
                 });
             } catch (err) {
-                console.error(`[syncGmail] Error scanning account "${email}":`, err);
+                logger.error('gmail', 'gmail_sync_failed', undefined, { operation: 'account_scan', ...safeError(err) });
             }
         })
     );
@@ -247,7 +248,7 @@ export async function syncGmail(
         accountsScanned: emailsSnap.size,
     };
     } catch (error: any) {
-        console.error('[syncGmail]', error);
+        logger.error('gmail', 'gmail_sync_failed', undefined, safeError(error));
         return {
             success: false,
             added: 0,

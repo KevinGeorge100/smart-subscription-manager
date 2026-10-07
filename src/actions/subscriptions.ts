@@ -13,6 +13,7 @@
 
 import type { SubscriptionFormData, SubscriptionSource } from '@/types';
 import { verifyAuth } from '@/lib/auth';
+import { logger, safeError } from '@/lib/logger';
 
 // ──────────────────────────────────────────────
 // Helpers
@@ -57,7 +58,7 @@ export async function addSubscription(
 
         return { success: true, id: ref.id };
     } catch (error: any) {
-        console.error('[addSubscription]', error);
+        logger.error('subscriptions', 'server_action_failed', undefined, { operation: 'add_subscription', ...safeError(error) });
         return { success: false, error: error?.message || 'Failed to add subscription' };
     }
 }
@@ -92,7 +93,7 @@ export async function updateSubscription(
 
         return { success: true };
     } catch (error: any) {
-        console.error('[updateSubscription]', error);
+        logger.error('subscriptions', 'server_action_failed', undefined, { operation: 'update_subscription', ...safeError(error) });
         return { success: false, error: error?.message || 'Failed to update subscription' };
     }
 }
@@ -118,7 +119,7 @@ export async function deleteSubscription(userId: string, subscriptionId: string,
 
         return { success: true };
     } catch (error: any) {
-        console.error('[deleteSubscription]', error);
+        logger.error('subscriptions', 'server_action_failed', undefined, { operation: 'delete_subscription', ...safeError(error) });
         return { success: false, error: error?.message || 'Failed to delete subscription' };
     }
 }

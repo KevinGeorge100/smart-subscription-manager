@@ -13,6 +13,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { getFirestoreAdmin } from '@/lib/firebase-admin';
 import { encrypt } from '@/lib/encryption';
+import { logger, requestIdFor, safeError } from '@/lib/logger';
 
 function getRedirectUri(request: NextRequest): string {
     const envUri = process.env.GOOGLE_REDIRECT_URI;
@@ -38,6 +39,12 @@ function getOAuth2Client(redirectUri: string) {
 }
 
 export async function GET(request: NextRequest) {
+    const requestId = requestIdFor(request);
+    const redirect = (path: string) => {
+        const response = NextResponse.redirect(new URL(path, request.url));
+        response.headers.set('X-Request-ID', requestId);
+        return response;
+    };
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const userId = searchParams.get('state');
@@ -45,14 +52,14 @@ export async function GET(request: NextRequest) {
     // Handle user denying access
     const errorParam = searchParams.get('error');
     if (errorParam) {
-        console.warn('[/api/gmail/callback] User denied access:', errorParam);
-        return NextResponse.redirect(new URL('/dashboard?sync=denied', request.url));
+        logger.warn('gmail', 'gmail_oauth_denied', requestId);
+        return redirect('/dashboard?sync=denied');
     }
 
     if (!code || !userId) {
         return NextResponse.json(
             { error: 'Missing code or state (userId) from Google OAuth callback.' },
-            { status: 400 }
+            { status: 400, headers: { 'X-Request-ID': requestId } }
         );
     }
 
@@ -105,9 +112,9 @@ export async function GET(request: NextRequest) {
 
 
 
-        return NextResponse.redirect(new URL('/dashboard?sync=connected', request.url));
+        return redirect('/dashboard?sync=connected');
     } catch (error) {
-        console.error('[/api/gmail/callback] Token exchange failed:', error);
-        return NextResponse.redirect(new URL('/dashboard?sync=error', request.url));
+        logger.error('gmail', 'gmail_oauth_failed', requestId, { operation: 'callback', ...safeError(error) });
+        return redirect('/dashboard?sync=error');
     }
 }

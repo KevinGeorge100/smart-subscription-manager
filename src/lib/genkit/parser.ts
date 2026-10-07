@@ -12,6 +12,7 @@
 
 import { genkit, z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
+import { logger, safeError } from '@/lib/logger';
 
 // ── Genkit Instance ────────────────────────────────────────────────────────────
 
@@ -112,7 +113,7 @@ export async function extractSub(emailBody: string): Promise<ExtractSubOutput | 
         if (result.confidence < 0.65) return null;
         return result;
     } catch (error) {
-        console.error('[extractSub] Genkit flow error:', error);
+        logger.error('ai', 'ai_request_failed', undefined, { operation: 'extract_subscription', ...safeError(error) });
         return null;
     }
 }

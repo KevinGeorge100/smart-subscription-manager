@@ -4,7 +4,13 @@ import { healthStatus, readinessStatus } from '../src/lib/health';
 
 describe('health checks', () => {
   it('always reports the process as healthy', () => {
-    assert.deepEqual(healthStatus(), { status: 'ok', service: 'subzero' });
+    assert.deepEqual(healthStatus({}), { status: 'ok', service: 'subzero' });
+  });
+
+  it('adds optional deployment metadata without making it required', () => {
+    assert.deepEqual(healthStatus({ APP_VERSION: '1.0.0', GIT_SHA: 'abc123' }), {
+      status: 'ok', service: 'subzero', version: '1.0.0', revision: 'abc123',
+    });
   });
 
   it('reports ready when core Firebase Admin configuration is present', () => {

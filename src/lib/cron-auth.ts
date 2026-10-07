@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
+import { logger } from '@/lib/logger';
 
 export interface CronAuthResult {
     isAuthorized: boolean;
@@ -22,7 +23,7 @@ export function verifyCronAuth(request: Request): CronAuthResult {
     const configuredSecret = process.env.CRON_SECRET;
 
     if (!configuredSecret || configuredSecret.trim() === '') {
-        console.error('[cron-auth] CRON_SECRET environment variable is not configured.');
+        logger.error('cron', 'cron_auth_unconfigured');
         return {
             isAuthorized: false,
             errorResponse: NextResponse.json(

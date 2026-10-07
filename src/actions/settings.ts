@@ -2,6 +2,7 @@
 
 import { getFirestoreAdmin, getAuthAdmin } from '@/lib/firebase-admin';
 import { verifyAuth } from '@/lib/auth';
+import { logger, safeError } from '@/lib/logger';
 
 export async function updateNotificationSettings(
     userId: string,
@@ -20,7 +21,7 @@ export async function updateNotificationSettings(
         });
         return { success: true };
     } catch (error: any) {
-        console.error('[updateNotificationSettings]', error);
+        logger.error('settings', 'server_action_failed', undefined, { operation: 'update_notifications', ...safeError(error) });
         return { success: false, error: error?.message || 'Failed to update settings' };
     }
 }
@@ -55,7 +56,7 @@ export async function updateProfile(
 
         return { success: true };
     } catch (error: any) {
-        console.error('[updateProfile]', error);
+        logger.error('settings', 'server_action_failed', undefined, { operation: 'update_profile', ...safeError(error) });
         return { success: false, error: error?.message || 'Failed to update profile' };
     }
 }
@@ -89,7 +90,7 @@ export async function deleteAccount(userId: string, idToken?: string) {
 
         return { success: true };
     } catch (error: any) {
-        console.error('[deleteAccount]', error);
+        logger.error('settings', 'server_action_failed', undefined, { operation: 'delete_account', ...safeError(error) });
         return { success: false, error: error?.message || 'Failed to delete account' };
     }
 }

@@ -13,6 +13,7 @@
 
 import { genkit, z } from 'genkit';
 import { googleAI } from '@genkit-ai/google-genai';
+import { logger, safeError } from '@/lib/logger';
 
 // ── Genkit Instance ───────────────────────────────────────────────────────────
 
@@ -119,7 +120,7 @@ export async function askSubZero(
     try {
         return await askSubZeroFlow({ query, subscriptions });
     } catch (error) {
-        console.error('[askSubZero] Genkit flow error:', error);
+        logger.error('ai', 'ai_request_failed', undefined, { operation: 'chat_flow', ...safeError(error) });
         return {
             answer: "I ran into an issue processing your request. Please try again in a moment.",
             referencedSubs: [],

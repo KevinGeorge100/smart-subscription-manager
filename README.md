@@ -105,6 +105,12 @@ For local Compose use, put the public variables and runtime variables in `.env.l
 
 `GET /api/health` returns 200 when the process is alive. `GET /api/ready` returns 200 when Firebase Admin's required runtime variables are present, or 503 with missing variable names. Readiness does not contact external services; Gmail, Gemini, SMTP, and cron configuration is feature-specific. Vercel remains the primary deployment target, including its scheduled cron configuration.
 
+## Observability
+
+Server events are emitted as single-line JSON with `timestamp`, `level`, `service`, `component`, `event`, and, where available, `requestId`, duration, and safe counts. API routes accept a valid `x-request-id` or generate a UUID and return it as `X-Request-ID`; Gmail server actions generate their own ID. Search Vercel function logs or container stdout/stderr by request ID, component, and event (for example `gmail_sync_failed`, `cron_job_failed`, or `ai_request_failed`). Metadata uses an allowlist, and external error messages are replaced with a fixed diagnostic message; tokens, credentials, prompts, and email bodies must never be added to logs.
+
+Use `/api/health` for liveness and `/api/ready` for core Firebase configuration presence. `APP_VERSION` and `GIT_SHA` are optional safe health metadata. External error monitoring such as Sentry can be added later if operational needs justify it.
+
 ## 📚 Documentation
 
 Looking for the academic summary and methodology? Read the **[Project Abstract](./docs/ABSTRACT.md)**.

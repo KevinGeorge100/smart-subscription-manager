@@ -5,6 +5,7 @@ import { Timestamp } from 'firebase-admin/firestore';
 import { type User as UserAccount, type Subscription } from '@/types';
 import { add, format, differenceInDays } from 'date-fns';
 import { verifyCronAuth } from '@/lib/cron-auth';
+import { durationMs, logger, requestIdFor, safeError } from '@/lib/logger';
 
 export const dynamic = 'force-dynamic';
 
@@ -48,18 +49,23 @@ function generateReminderEmailHTML(user: UserAccount, subscriptions: Subscriptio
 
 
 export async function GET(request: Request) {
+    const requestId = requestIdFor(request);
+    const startedAt = performance.now();
+    const reply = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { 'X-Request-ID': requestId } });
     // 1. Authenticate the cron job request via Bearer token
     const auth = verifyCronAuth(request);
     if (!auth.isAuthorized) {
+        logger.warn('cron', 'authentication_failed', requestId, { operation: 'send_reminders' });
+        auth.errorResponse!.headers.set('X-Request-ID', requestId);
         return auth.errorResponse!;
     }
 
-    console.log('[cron:reminders] Job started');
+    logger.info('cron', 'cron_job_started', requestId, { operation: 'send_reminders' });
 
     const transporter = getEmailTransporter();
     if (!transporter) {
-        console.error('[cron:reminders] Email service not configured');
-        return NextResponse.json({ success: false, message: "Email service not configured." }, { status: 500 });
+        logger.error('cron', 'cron_job_failed', requestId, { operation: 'send_reminders', status: 'email_unavailable', durationMs: durationMs(startedAt) });
+        return reply({ success: false, message: "Email service not configured." }, 500);
     }
 
     try {
@@ -75,8 +81,8 @@ export async function GET(request: Request) {
             .get();
 
         if (snapshot.empty) {
-            console.log('[cron:reminders] Job completed: No upcoming renewals to process');
-            return NextResponse.json({ success: true, message: 'No upcoming renewals to process.' });
+            logger.info('cron', 'cron_job_skipped', requestId, { operation: 'send_reminders', status: 'no_renewals', durationMs: durationMs(startedAt), count: 0 });
+            return reply({ success: true, message: 'No upcoming renewals to process.' });
         }
 
         // 3. Filter out subscriptions that have already had a reminder sent recently
@@ -95,8 +101,8 @@ export async function GET(request: Request) {
         });
 
         if (subsToRemind.length === 0) {
-            console.log('[cron:reminders] Job completed: No new reminders to send');
-            return NextResponse.json({ success: true, message: 'No new reminders to send.' });
+            logger.info('cron', 'cron_job_skipped', requestId, { operation: 'send_reminders', status: 'no_new_reminders', durationMs: durationMs(startedAt), count: 0 });
+            return reply({ success: true, message: 'No new reminders to send.' });
         }
 
         // 4. Group subscriptions by user ID
@@ -163,19 +169,18 @@ export async function GET(request: Request) {
             await batch.commit();
         }
 
-        console.log(`[cron:reminders] Job completed: Sent ${emailsSent} reminder email(s) across ${Object.keys(subsByUserId).length} user(s)`);
-        return NextResponse.json({ success: true, message: `Sent ${emailsSent} reminder emails.` });
+        logger.info('cron', 'cron_job_completed', requestId, { operation: 'send_reminders', durationMs: durationMs(startedAt), emailsSent, usersProcessed: Object.keys(subsByUserId).length });
+        return reply({ success: true, message: `Sent ${emailsSent} reminder emails.` });
 
     } catch (error: any) {
-        console.error('[cron:reminders] Job failed:', error?.message || error);
+        logger.error('cron', 'cron_job_failed', requestId, { operation: 'send_reminders', durationMs: durationMs(startedAt), ...safeError(error) });
         // This is where you might integrate with a logging/monitoring service
         if (error.code === 'failed-precondition') {
-            return NextResponse.json({
+            return reply({
                 success: false,
                 message: 'Query requires an index. Please create the required Firestore index.',
-                error: error.message
-            }, { status: 500 });
+            }, 500);
         }
-        return NextResponse.json({ success: false, message: 'An internal error occurred.' }, { status: 500 });
+        return reply({ success: false, message: 'An internal error occurred.' }, 500);
     }
 }

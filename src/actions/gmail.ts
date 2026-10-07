@@ -15,6 +15,7 @@ import { detectSubscriptions } from '@/lib/genkit/flows/detect-subscriptions';
 import { addSubscription } from './subscriptions';
 import { revalidatePath } from 'next/cache';
 import { verifyAuth } from '@/lib/auth';
+import { durationMs, logger, newRequestId, safeError } from '@/lib/logger';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -226,7 +227,7 @@ export async function getGmailConnectionStatus(userId: string, idToken?: string)
 
         return { connected: true, accounts };
     } catch (error: any) {
-        console.error('[getGmailConnectionStatus]', error);
+        logger.error('gmail', 'gmail_status_failed', undefined, safeError(error));
         return { connected: false, accounts: [], error: error?.message };
     }
 }
@@ -246,9 +247,13 @@ export async function syncSubscriptions(
     accountsScanned?: number;
     error?: string;
 }> {
+    const requestId = newRequestId();
+    const startedAt = performance.now();
+    logger.info('gmail', 'gmail_sync_started', requestId);
     try {
         const { uid: authUid } = await verifyAuth(idToken);
         if (userId && userId !== authUid) {
+            logger.warn('gmail', 'authorization_denied', requestId, { operation: 'sync' });
             return { success: false, error: 'Forbidden: Cannot sync another user subscriptions' };
         }
 
@@ -259,13 +264,14 @@ export async function syncSubscriptions(
             .get();
 
         if (snapshot.empty) {
+            logger.info('gmail', 'gmail_sync_completed', requestId, { status: 'no_accounts', durationMs: durationMs(startedAt), accountsProcessed: 0, emailsScanned: 0, subscriptionsDetected: 0 });
             return { success: false, error: 'No Gmail accounts connected.' };
         }
 
         // ── Scan each account and collect all email texts ──────────────────────
         const allEmailTexts: { text: string; messageId: string }[] = [];
 
-        await Promise.allSettled(
+        const scanResults = await Promise.allSettled(
             snapshot.docs.map(async (doc) => {
                 const { email, encryptedTokens } = doc.data() as {
                     email: string;
@@ -277,6 +283,9 @@ export async function syncSubscriptions(
                 allEmailTexts.push(...texts);
             })
         );
+        if (scanResults.some((result) => result.status === 'rejected')) {
+            logger.warn('gmail', 'gmail_sync_failed', requestId, { operation: 'account_scan', durationMs: durationMs(startedAt) });
+        }
 
         if (allEmailTexts.length === 0) {
             const now = new Date().toISOString();
@@ -285,6 +294,7 @@ export async function syncSubscriptions(
                     doc.ref.update({ lastSyncedAt: now, lastSyncCount: 0 })
                 )
             );
+            logger.info('gmail', 'gmail_sync_completed', requestId, { durationMs: durationMs(startedAt), accountsProcessed: snapshot.size, emailsScanned: 0, subscriptionsDetected: 0 });
             return {
                 success: true,
                 added: 0,
@@ -354,6 +364,7 @@ export async function syncSubscriptions(
 
 
 
+        logger.info('gmail', 'gmail_sync_completed', requestId, { durationMs: durationMs(startedAt), accountsProcessed: snapshot.size, emailsScanned: allEmailTexts.length, subscriptionsDetected: detected.length });
         return {
             success: true,
             added,
@@ -362,7 +373,7 @@ export async function syncSubscriptions(
         };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('[syncSubscriptions]', error);
+        logger.error('gmail', 'gmail_sync_failed', requestId, { durationMs: durationMs(startedAt), ...safeError(error) });
         return { success: false, error: message };
     }
 }
@@ -391,7 +402,7 @@ export async function disconnectGmail(
         return { success: true };
     } catch (error) {
         const message = error instanceof Error ? error.message : 'Unknown error';
-        console.error('[disconnectGmail]', error);
+        logger.error('gmail', 'gmail_disconnect_failed', undefined, safeError(error));
         return { success: false, error: message };
     }
 }

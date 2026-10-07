@@ -1,4 +1,5 @@
 import * as nodemailer from 'nodemailer';
+import { logger } from '@/lib/logger';
 
 /**
  * Configures and returns a nodemailer transporter for sending emails.
@@ -10,7 +11,7 @@ export function getEmailTransporter() {
     const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS } = process.env;
 
     if (!SMTP_HOST || !SMTP_PORT || !SMTP_USER || !SMTP_PASS) {
-        console.warn("SMTP environment variables not fully configured. Email sending will be disabled.");
+        logger.warn('email', 'email_transport_unconfigured');
         return null;
     }
 
