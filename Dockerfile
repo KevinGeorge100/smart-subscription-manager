@@ -22,11 +22,17 @@ RUN npm run build
 
 FROM node:20-bookworm-slim AS runtime
 WORKDIR /app
+ARG APP_VERSION=""
+ARG GIT_SHA=""
 ENV NODE_ENV=production \
     PORT=3000 \
-    HOSTNAME=0.0.0.0
+    HOSTNAME=0.0.0.0 \
+    APP_VERSION=${APP_VERSION} \
+    GIT_SHA=${GIT_SHA}
 LABEL org.opencontainers.image.title="SubZero" \
-      org.opencontainers.image.source="https://github.com/KevinGeorge100/smart-subscription-manager"
+      org.opencontainers.image.source="https://github.com/KevinGeorge100/smart-subscription-manager" \
+      org.opencontainers.image.version="${APP_VERSION}" \
+      org.opencontainers.image.revision="${GIT_SHA}"
 COPY --from=builder --chown=node:node /app/public ./public
 COPY --from=builder --chown=node:node /app/.next/standalone ./
 COPY --from=builder --chown=node:node /app/.next/static ./.next/static

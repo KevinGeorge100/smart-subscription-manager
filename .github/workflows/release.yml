@@ -1,0 +1,74 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Validate and publish release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout release commit
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verify tag and main commit
+        shell: bash
+        run: |
+          [[ "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]
+          git fetch origin main
+          test "$GITHUB_SHA" = "$(git rev-parse origin/main)"
+          test "${GITHUB_REF_NAME#v}" = "$(node -p 'require("./package.json").version')"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build application
+        run: npm run build
+        env:
+          NEXT_PUBLIC_FIREBASE_API_KEY: "AIzaSyDummyKeyForBuildValidation12345"
+          NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: "subzero-demo.firebaseapp.com"
+          NEXT_PUBLIC_FIREBASE_PROJECT_ID: "subzero-demo"
+          NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: "subzero-demo.appspot.com"
+          NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "123456789012"
+          NEXT_PUBLIC_FIREBASE_APP_ID: "1:123456789012:web:abcdef123456"
+          NEXT_PUBLIC_APP_URL: "http://localhost:3000"
+
+      - name: Build release container
+        run: |
+          docker build -t "subzero:${GITHUB_REF_NAME}" \
+            --build-arg "APP_VERSION=${GITHUB_REF_NAME#v}" \
+            --build-arg "GIT_SHA=${GITHUB_SHA}" \
+            --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=AIzaSyDummyKeyForBuildValidation12345 \
+            --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=subzero-demo.firebaseapp.com \
+            --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=subzero-demo \
+            --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=subzero-demo.appspot.com \
+            --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=123456789012 \
+            --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=1:123456789012:web:abcdef123456 \
+            --build-arg NEXT_PUBLIC_APP_URL=http://localhost:3000 .
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true

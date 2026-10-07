@@ -111,6 +111,10 @@ Server events are emitted as single-line JSON with `timestamp`, `level`, `servic
 
 Use `/api/health` for liveness and `/api/ready` for core Firebase configuration presence. `APP_VERSION` and `GIT_SHA` are optional safe health metadata. External error monitoring such as Sentry can be added later if operational needs justify it.
 
+## Release and Deployment
+
+Changes are validated by CI and CodeQL, reviewed in Vercel Preview, and deployed to Vercel Production from `main`. Version tags trigger a validation workflow and GitHub Release; the container remains an alternate runtime. See the [deployment guide](./docs/DEPLOYMENT.md), [operations runbook](./docs/RUNBOOK.md), and [release checklist](./docs/RELEASE_CHECKLIST.md) for verification and rollback.
+
 ## 📚 Documentation
 
 Looking for the academic summary and methodology? Read the **[Project Abstract](./docs/ABSTRACT.md)**.
