@@ -1,122 +1,115 @@
-<div align="center">
-  <img src="./public/favicon.ico" alt="SubZero Logo" width="80" height="80">
-  
-  # SubZero
-  **Melt your ghost subscriptions. Regain financial control.**
+# SubZero
 
-  *An autonomous AI agent that reads your receipts, graphs your burn rate, and hunts down subscriptions you forgot you were paying for.*
+AI-powered subscription intelligence with production-grade delivery engineering.
 
-  ![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js&logoColor=white)
-  ![React](https://img.shields.io/badge/React-19-blue?logo=react&logoColor=white)
-  ![Firebase](https://img.shields.io/badge/Firebase-Firestore%20%2B%20Auth-FFCA28?logo=firebase&logoColor=black)
-  ![Genkit](https://img.shields.io/badge/AI-Google%20Genkit%20%2B%20Gemini-4285F4?logo=google&logoColor=white)
-  [![CI](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/ci.yml/badge.svg)](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/ci.yml)
-  [![CodeQL](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/codeql.yml/badge.svg)](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/codeql.yml)
+[Live demo](https://smart-subscription-manager.vercel.app) · [Latest release](https://github.com/KevinGeorge100/smart-subscription-manager/releases/tag/v1.0.0) · [CI](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/ci.yml) · [CodeQL](https://github.com/KevinGeorge100/smart-subscription-manager/actions/workflows/codeql.yml)
 
-  <br />
-  
-  ![SubZero Dashboard](./public/demo-placeholder.png)
-  *(Placeholder: Insert high-res dashboard screenshot here)*
-</div>
+**Production:** Live · **Release:** v1.0.0 · **CI:** Passing · **Container:** Built and smoke-tested in CI
 
----
+## Why SubZero
 
-## ⚡ Core Features
+Recurring charges are easy to miss when their receipts are spread across inboxes. SubZero connects Gmail accounts, finds likely subscriptions in receipts, and uses Gemini to normalize the extracted details. The dashboard turns those records into renewal and spending views that users can review and manage.
 
-*   **📥 Quick Sync (Gmail Integration):** Connect one or multiple Gmail accounts. SubZero scans for invoices and receipts instantly. No brittle bank connections required.
-*   **🧠 AI Extraction:** Forget manual entry. Using Google Genkit and Gemini 1.5 Flash, SubZero reads messy email HTML and semantically extracts the service name, exact amount, and billing cycle.
-*   **📈 Financial Pulse:** A beautiful 12-month predictive burn chart. Toggle the "Optimized Path" to see exactly how much you'd save by switching your monthly subs to annual plans.
-*   **💬 "Ask SubZero" Chat:** A glassmorphic AI assistant living in your dashboard. Ask it *"How much am I spending on streaming?"* or *"What renews next week?"* for instant, precise answers based solely on your data.
-*   **🤖 Shadow Sync:** Set it and forget it. A Vercel Cron job runs daily in the background, incrementally syncing your inboxes for new receipts so your ledger is never out of date.
+## Key Features
 
----
+- **Gmail discovery:** OAuth connection for multiple Gmail accounts and user-initiated receipt scanning. The dashboard also checks whether the last sync is at least 24 hours old when it loads.
+- **AI extraction:** Genkit and Gemini extract subscription details from candidate emails.
+- **Ask SubZero:** The assistant answers dashboard questions using selected subscription fields.
+- **Financial analytics:** Spending trends, projections, and annual-plan savings estimates.
+- **Renewal reminders:** Authenticated Vercel cron job sends upcoming-renewal email and dashboard notifications.
+- **Monthly financial pulse:** Authenticated monthly cron job emails a spending and renewal summary to eligible users.
 
-## 🛠 The "Vibe Code" Stack
+## Production Architecture
 
-SubZero is built on a modern, edge-ready stack prioritizing speed, animations, and AI-native architecture.
+```mermaid
+flowchart LR
+    User[User browser] --> Web[Next.js on Vercel]
+    User --> Auth[Firebase Auth]
+    Web --> Admin[Firebase Admin / Firestore]
+    Web --> Gmail[Gmail OAuth and API]
+    Web --> AI[Genkit / Gemini]
+    Cron[Vercel Cron] --> Web
+    Web --> Mail[SMTP]
+    Web --> Probes[Health and readiness]
+    Web --> Logs[Structured JSON logs]
+```
 
-| Layer | Technologies |
-| :--- | :--- |
-| **Frontend** | Next.js 15 (App Router), React 19, Tailwind CSS, Framer Motion, Radix UI, Recharts |
-| **Backend & DB** | Firebase (Auth, Firestore), Firebase Admin SDK, Vercel Cron |
-| **AI Engine** | Google Genkit, Gemini 1.5 Flash (via `@genkit-ai/google-genai`) |
-| **Integrations** | Googleapis (Gmail API OAuth2), Nodemailer |
+The browser holds the Firebase client session. Protected server actions and AI routes verify Firebase identity before privileged Firestore operations. Gmail tokens are encrypted before storage; email content is used for extraction and is excluded from application logs. See the [architecture guide](./docs/ARCHITECTURE.md) for data flow and trust boundaries.
 
----
+## DevOps & Production Engineering
 
-## 🔒 Security & Privacy First
+```mermaid
+flowchart LR
+    Branch[Feature branch] --> PR[Pull request]
+    PR --> Checks[CI and CodeQL]
+    PR --> Preview[Vercel Preview]
+    Checks --> Review[Review]
+    Preview --> Review
+    Review --> Main[Merge to main]
+    Main --> Prod[Vercel Production]
+    Prod --> Verify[Health verification]
+    Verify --> Release[SemVer tag and GitHub Release]
+```
 
-We treat your inbox with the highest respect:
-*   **Least Privilege:** SubZero requests the highly restricted `https://www.googleapis.com/auth/gmail.readonly` OAuth scope. It can read emails, but it cannot delete, send, or modify them.
-*   **AES-256-GCM Encryption:** Google refresh tokens are strongly encrypted *before* hitting the Firestore database using `crypto` AES-256-GCM.
-*   **Lean LLM Context:** When syncing or chatting, only the bare minimum text or subscription metadata is sent to Gemini. Your entire history is never dumped into a prompt.
+| Capability | Implementation |
+| --- | --- |
+| Quality gates | GitHub Actions: `npm ci`, TypeScript, lint, tests, production build, Docker build and smoke test |
+| Security scanning | CodeQL, Dependabot, and a nonblocking npm audit signal |
+| Container | Multi-stage Node 20 image, Next.js standalone output, non-root runtime |
+| Hosting | Vercel Production from `main`; branch/PR Preview deployments |
+| Data and identity | Firebase Auth, Firestore, and server-side Firebase Admin verification |
+| Operations | `/api/health`, `/api/ready`, structured JSON events, request IDs |
+| Scheduled work | Bearer-authenticated renewal reminder and monthly pulse routes |
+| Releases | Semantic Versioning, annotated tags, validated GitHub Releases |
+| Recovery | Vercel rollback where available, or a history-preserving Git revert |
+| Sensitive token storage | AES-256-GCM encryption for stored Gmail OAuth tokens |
 
----
+The Docker image is a portable alternate runtime; Vercel remains the primary production host. The release workflow validates a tagged `main` commit and creates a GitHub Release without redeploying production.
 
-## 🚀 Setup Guide
+## Engineering Challenges Solved
 
-Get SubZero running locally in minutes.
+- **Secure multi-tenant operations:** Server actions verify the Firebase ID token and use its UID for privileged access, rejecting a conflicting caller-supplied UID.
+- **Reliable scheduled workloads:** Cron routes use Bearer authentication and explicit Vercel schedules. The removed Gmail sync cron is not part of the deployment; Gmail sync runs from the application.
+- **Portable runtime:** Next.js standalone output is packaged into a small production image that runs as a non-root user, independently of Vercel.
+- **Operational visibility:** Liveness and readiness probes, structured events, safe metadata, and request IDs make failures searchable without logging tokens or email bodies.
 
-### 1. Clone & Install
+## Run Locally
+
 ```bash
 git clone https://github.com/KevinGeorge100/smart-subscription-manager.git
 cd smart-subscription-manager
-npm install
-```
-
-### 2. Environment Variables
-Create a `.env.local` file in the root directory. You will need to provision projects in Firebase and Google Cloud Console.
-
-```env
-# Google Cloud Console (OAuth & API)
-GOOGLE_CLIENT_ID="your_google_client_id.apps.googleusercontent.com"
-GOOGLE_CLIENT_SECRET="your_google_client_secret"
-GOOGLE_REDIRECT_URI="http://localhost:9002/api/gmail/callback"
-GEMINI_API_KEY="your_gemini_api_key_for_genkit"
-
-# Firebase Admin SDK (Service Account)
-FIREBASE_PROJECT_ID="your-project-id"
-FIREBASE_CLIENT_EMAIL="firebase-adminsdk-xxxxx@your-project-id.iam.gserviceaccount.com"
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\nYour\nVery\nLong\nKey\n-----END PRIVATE KEY-----\n"
-
-# Security (Generate random 32-byte hex strings)
-ENCRYPTION_KEY="your_32_byte_aes_key_in_hex"
-CRON_SECRET="your_random_cron_secret"
-```
-
-### 3. Run Development Server
-```bash
+npm ci
 npm run dev
 ```
-Open [http://localhost:9002](http://localhost:9002) (Port 9002 is specified in `package.json`).
 
----
+The development server listens on [http://localhost:9002](http://localhost:9002). Create an ignored `.env.local` with values for the features you use:
 
-## Containerized Deployment
+| Configuration | Variables |
+| --- | --- |
+| Public Firebase build configuration | `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, `NEXT_PUBLIC_APP_URL` |
+| Core server runtime | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` |
+| Gmail OAuth | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`, `ENCRYPTION_KEY` |
+| Gemini | `GOOGLE_GENAI_API_KEY` or `GEMINI_API_KEY` |
+| Email and scheduled jobs | `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS`, `CRON_SECRET` |
 
-The multi-stage Docker build creates a Next.js standalone image on Node 20. Supply the public client configuration at build time (these values are embedded in browser assets): `NEXT_PUBLIC_FIREBASE_API_KEY`, `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`, `NEXT_PUBLIC_FIREBASE_PROJECT_ID`, `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`, `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`, `NEXT_PUBLIC_FIREBASE_APP_ID`, and `NEXT_PUBLIC_APP_URL`.
+Public variables are embedded at build time; server credentials must be injected at runtime. For a local production simulation, use `docker compose --env-file .env.local build` and `docker compose --env-file .env.local up`. See the [deployment guide](./docs/DEPLOYMENT.md) for environment and rollback details.
+
+## Quality Gates
 
 ```bash
-docker build -t subzero --build-arg NEXT_PUBLIC_FIREBASE_API_KEY=... --build-arg NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=... --build-arg NEXT_PUBLIC_FIREBASE_PROJECT_ID=... --build-arg NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=... --build-arg NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=... --build-arg NEXT_PUBLIC_FIREBASE_APP_ID=... --build-arg NEXT_PUBLIC_APP_URL=http://localhost:3000 .
-docker run --env-file .env.local -p 3000:3000 subzero
+npm run typecheck
+npm run lint
+npm test
+npm run build
 ```
 
-For local Compose use, put the public variables and runtime variables in `.env.local`, then run `docker compose --env-file .env.local build` and `docker compose --env-file .env.local up`. Compose uses the file for build argument substitution and injects it at runtime. Never pass server secrets as build arguments: `FIREBASE_PRIVATE_KEY`, `FIREBASE_CLIENT_EMAIL`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_GENAI_API_KEY`/`GEMINI_API_KEY`, `SMTP_PASS`, `ENCRYPTION_KEY`, and `CRON_SECRET` belong only in runtime configuration. The container does not include `.env.local`.
+The current suite has **30 passing tests**. CI also validates the production container and probes `/api/health`.
 
-`GET /api/health` returns 200 when the process is alive. `GET /api/ready` returns 200 when Firebase Admin's required runtime variables are present, or 503 with missing variable names. Readiness does not contact external services; Gmail, Gemini, SMTP, and cron configuration is feature-specific. Vercel remains the primary deployment target, including its scheduled cron configuration.
+## Documentation
 
-## Observability
-
-Server events are emitted as single-line JSON with `timestamp`, `level`, `service`, `component`, `event`, and, where available, `requestId`, duration, and safe counts. API routes accept a valid `x-request-id` or generate a UUID and return it as `X-Request-ID`; Gmail server actions generate their own ID. Search Vercel function logs or container stdout/stderr by request ID, component, and event (for example `gmail_sync_failed`, `cron_job_failed`, or `ai_request_failed`). Metadata uses an allowlist, and external error messages are replaced with a fixed diagnostic message; tokens, credentials, prompts, and email bodies must never be added to logs.
-
-Use `/api/health` for liveness and `/api/ready` for core Firebase configuration presence. `APP_VERSION` and `GIT_SHA` are optional safe health metadata. External error monitoring such as Sentry can be added later if operational needs justify it.
-
-## Release and Deployment
-
-Changes are validated by CI and CodeQL, reviewed in Vercel Preview, and deployed to Vercel Production from `main`. Version tags trigger a validation workflow and GitHub Release; the container remains an alternate runtime. See the [deployment guide](./docs/DEPLOYMENT.md), [operations runbook](./docs/RUNBOOK.md), and [release checklist](./docs/RELEASE_CHECKLIST.md) for verification and rollback.
-
-## 📚 Documentation
-
-Looking for the academic summary and methodology? Read the **[Project Abstract](./docs/ABSTRACT.md)**.
-
-*This project was developed adhering to S6 academic standards for software architecture and autonomous agent design.*
+- [Architecture](./docs/ARCHITECTURE.md)
+- [Deployment guide](./docs/DEPLOYMENT.md)
+- [Operations runbook](./docs/RUNBOOK.md)
+- [Release checklist](./docs/RELEASE_CHECKLIST.md)
+- [Changelog](./CHANGELOG.md)
+- [Project abstract](./docs/ABSTRACT.md)
